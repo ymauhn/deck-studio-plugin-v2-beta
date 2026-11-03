@@ -1,6 +1,26 @@
 # Deck Studio
 
-Editor local do deck da defesa NEXUS-GO, com o Claude num chat ao lado. Você clica numa caixa do slide, pede a mudança no chat e vê o slide mudar na hora. O agente roda na sua assinatura do Claude (Max), pelo Claude Agent SDK, e nunca usa chave de API.
+Editor local de apresentações (HTML e Beamer) com o Claude num chat ao lado. Você clica numa caixa do slide, pede a mudança no chat e vê o slide mudar na hora. Cada mudança traz diff e **Desfazer**. O agente roda na sua assinatura do Claude, pelo Claude Agent SDK, e nunca usa chave de API.
+
+Nasceu para o deck da defesa de mestrado NEXUS-GO e também cria uma apresentação nova a partir de um PDF (artigo, dissertação ou relatório).
+
+> **Estado:** uso pessoal e só Windows por enquanto (usa `msvcrt`, `taskkill` e caminhos do Windows). **Licença:** ainda não escolhida; veja a proposta em [`docs/LICENCA-PROPOSTA.md`](docs/LICENCA-PROPOSTA.md).
+
+## Requisitos e instalação
+
+- Windows 10 ou 11, [uv](https://docs.astral.sh/uv/) e Python 3.12.
+- O Claude Code com login feito numa assinatura (Pro ou Max). Ao abrir, o app apaga do próprio ambiente as variáveis `ANTHROPIC_*` e `CLAUDE*`.
+- Node.js, quando o deck usa o build em Node do kit; uma distribuição TeX com `latexmk` (MiKTeX ou TeX Live) para a versão Beamer.
+
+```powershell
+git clone https://github.com/ymauhn/deck-studio
+cd deck-studio
+uv sync
+.venv\Scripts\python.exe -m playwright install chromium
+.venv\Scripts\python.exe -m deck_studio --kit "C:\caminho\do\seu\kit"
+```
+
+Sem `--kit`, o app abre o kit padrão do autor, definido em `deck_studio/__main__.py` (`DEFAULT_KIT`).
 
 ## Abrir
 
