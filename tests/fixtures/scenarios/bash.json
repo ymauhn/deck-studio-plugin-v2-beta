@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "approval": "Bash", "input": { "command": "npm run lint", "description": "Lint the deck" } },
+    { "say": "Resultado: {{result}}" }
+  ]
+}

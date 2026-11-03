@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "say": "Imagens: {{images}}" }
+  ]
+}

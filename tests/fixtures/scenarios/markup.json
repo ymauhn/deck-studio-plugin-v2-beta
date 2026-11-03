@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "say": "Veja <img src=\"x\" onerror=\"window.planted = 'img'\"> e <script>window.planted = 'script'</script>, o `<b onclick=\"window.planted = 'code'\">x</b>` e **<i>isto</i>**." }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "Primary criterion: wF", "new_string": "Main criterion: wF" } },
+    { "tool": "Write", "input": { "file_path": "context/turn-card-note.md", "content": "Nota do agente de teste.\n" } },
+    { "say": "Pronto, mudei dois arquivos." }
+  ]
+}

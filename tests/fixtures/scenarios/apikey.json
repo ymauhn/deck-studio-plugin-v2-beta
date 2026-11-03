@@ -1,0 +1,6 @@
+{
+  "init": { "apiKeySource": "ANTHROPIC_API_KEY" },
+  "steps": [
+    { "say": "Esta resposta não deveria aparecer." }
+  ]
+}

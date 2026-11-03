@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "approval": "Bash", "input": {
+        "command": "cd \"C:/Users/Autor/Deck Studio/Proteínas em Rede\" && mkdir -p beamer/apresentacao/figures\ncp context/proteinas-em-rede/figuras/p004-1.png context/proteinas-em-rede/figuras/p005-1.png context/proteinas-em-rede/figuras/p006-1.png beamer/apresentacao/figures/\nls -la beamer/apresentacao/figures/ && echo \"figuras copiadas para o Beamer\"\nrm -rf beamer/apresentacao/figures/tmp-antigo context/proteinas-em-rede/figuras/rascunhos-que-ninguem-usa",
+        "description": "Copy the figures into the Beamer deck" } },
+    { "say": "Resultado: {{result}}" }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "say": "**Para revisar:**\n- **Autor:** preencha o `\\author` do título.\n- A *Figura 5.6* ficou de fora.\n\n1. Título\n2. Problema\n\n## Próximos passos\n\n```\n\\begin{frame}{Resultados}\n  \\includegraphics{fig}\n```\n\nO resto ficou como estava." }
+  ]
+}

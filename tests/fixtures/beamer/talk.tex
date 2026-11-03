@@ -1,0 +1,40 @@
+% Deck Studio test fixture: a tiny hand-written Beamer deck (pdfLaTeX).
+\documentclass[aspectratio=169]{beamer}
+\setbeamertemplate{navigation symbols}{}
+\graphicspath{{figures/}}
+\title{Fixture Deck}
+\author{Deck Studio}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Harbor Water}
+  \begin{itemize}[<+->]
+    \item Lanterns glow over quiet water
+    \item Fishermen mend their nets
+    \item Gulls circle the old pier
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Mountain Weather}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+    \begin{itemize}
+      \item Clouds gather near the summit
+      \item<2-> Thunder rolls across the valley
+    \end{itemize}
+    \column{0.35\textwidth}
+    \includegraphics[width=\linewidth]{dot}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Closing Remarks}
+  Thanks for listening.
+
+  \only<2>{Questions are welcome.}
+\end{frame}
+
+\end{document}

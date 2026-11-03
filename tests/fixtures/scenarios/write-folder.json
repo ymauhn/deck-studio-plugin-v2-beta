@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "tool": "Write", "input": { "file_path": "deck/src/slides", "content": "x" } },
+    { "say": "Resultado: {{result}}" }
+  ]
+}

@@ -1,0 +1,19 @@
+/* Turn cards: the files a request changed (green, as files), its diff and Desfazer. */
+.msg.turn {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; font-size: 13px;
+  background: var(--raised); border: 1px solid var(--hair); border-radius: 10px;
+}
+.turn-files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.turn-files code { font: 12px var(--font-data); color: var(--fuse-ink); overflow-wrap: anywhere; }
+.turn .diff {
+  margin: 0; max-height: 18em; overflow: auto; padding: 8px 10px; border-radius: 6px;
+  background: var(--sunk); color: var(--ink2); font: 12px/1.45 var(--font-data); white-space: pre;
+}
+.turn .diff[hidden] { display: none; }
+.diff .add { color: var(--fuse-ink); }
+.diff .del { color: var(--warn); }
+.diff .head, .diff .hunk { color: var(--muted); }
+.turn-actions { display: flex; gap: 8px; }
+.turn .btn:disabled { opacity: .55; cursor: default; }
+.turn-note:empty { display: none; }
+.turn-note.error { color: var(--warn); }

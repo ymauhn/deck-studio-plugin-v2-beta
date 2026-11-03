@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "say": "Vou ver a figura." },
+    { "tool": "Read", "input": { "file_path": "deck/src/img/figura.png" },
+      "crash": "JSON message exceeded maximum buffer size of 1048576 bytes" }
+  ]
+}

@@ -1,0 +1,13 @@
+/* Tool cards in the conversation: green = files (the UI's token rule), blue while running, orange when refused,
+   grey when the turn ended before its result. */
+.tool-card {
+  align-self: flex-start; max-width: 100%; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+  font-size: 13px; line-height: 1.4; color: var(--ink2); background: var(--raised);
+  border: 1px solid var(--hair); border-left: 3px solid var(--fuse); border-radius: 6px; padding: 5px 10px;
+}
+.tool-card b { font-weight: 600; color: var(--ink); }
+.tool-card code { font: 12px/1.4 var(--font-data); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool-card[data-state="running"] { border-left-color: var(--seq); }
+.tool-card[data-state="stopped"] { border-left-color: var(--muted); }
+.tool-card[data-state="denied"], .tool-card[data-state="error"] { border-left-color: var(--warn); background: var(--warn-t); }
+.tool-detail { color: var(--ink); overflow-wrap: anywhere; }

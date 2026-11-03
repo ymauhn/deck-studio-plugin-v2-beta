@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "mcp": "screenshot_slide", "input": { "slide": 13, "step": 1, "highlightLoc": "deck/src/slides/03-data.html:9:5" } },
+    { "say": "Vi: {{result}}" }
+  ]
+}

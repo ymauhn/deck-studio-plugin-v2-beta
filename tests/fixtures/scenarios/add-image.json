@@ -1,0 +1,14 @@
+{
+  "steps": [
+    { "mcp": "add_image", "input": { "contextFile": "Minha Figura Ção.PNG" } },
+    { "say": "1: {{result}}" },
+    { "mcp": "add_image", "input": { "contextFile": "Minha Figura Ção.PNG" } },
+    { "say": "2: {{result}}" },
+    { "mcp": "add_image", "input": { "contextFile": "foto.jpeg", "name": "Gráfico Final" } },
+    { "say": "3: {{result}}" },
+    { "mcp": "add_image", "input": { "contextFile": "notas.txt" } },
+    { "say": "4: {{result}}" },
+    { "mcp": "add_image", "input": { "contextFile": "../tools/numbering.py" } },
+    { "say": "5: {{result}}" }
+  ]
+}

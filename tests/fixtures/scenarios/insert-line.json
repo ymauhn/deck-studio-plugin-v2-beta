@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "<h2 class=\"title\">Data: a CAFA5-derived corpus</h2>",
+                                 "new_string": "<h2 class=\"title\">Data: a CAFA5-derived corpus</h2>\r\n<!-- nota -->" } },
+    { "say": "Inseri uma linha acima dos marcadores." }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "tool": "Write", "input": { "file_path": "data/studio-test.txt", "content": "x" } },
+    { "say": "Resultado: {{result}}" }
+  ]
+}

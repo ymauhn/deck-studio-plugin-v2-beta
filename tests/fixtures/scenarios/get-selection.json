@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "mcp": "get_selection" },
+    { "say": "Seleção: {{result}}" }
+  ]
+}

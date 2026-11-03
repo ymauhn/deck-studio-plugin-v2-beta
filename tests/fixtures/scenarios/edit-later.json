@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "wait": 1500 },
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "80 / 10 / 10 split", "new_string": "80/10/10 split" } },
+    { "say": "Editei o slide em segundo plano." }
+  ]
+}

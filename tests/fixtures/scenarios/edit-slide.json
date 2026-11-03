@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "Labels per protein (mean)", "new_string": "Mean labels per protein" } },
+    { "say": "Pronto." }
+  ]
+}

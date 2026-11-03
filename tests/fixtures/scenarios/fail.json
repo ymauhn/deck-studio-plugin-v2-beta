@@ -1,0 +1,9 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "Label matrix density", "new_string": "Label density" } },
+    { "say": "Comecei a mudar o slide." },
+    { "fail": "a API respondeu 529 (sobrecarregada)" },
+    { "say": "Esta resposta não deveria aparecer." }
+  ]
+}

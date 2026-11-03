@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "approval": "Write", "input": { "file_path": "tools/nota-do-agente.txt", "content": "nota\n" } },
+    { "say": "Escrevi a nota." }
+  ]
+}

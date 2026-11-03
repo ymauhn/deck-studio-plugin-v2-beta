@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "beamer/apresentacao/apresentacao.tex",
+                                 "old_string": "\\author{[author]}", "new_string": "\\author{Ana Souza}" } },
+    { "say": "Preenchi a autoria do Beamer a partir do PDF." }
+  ]
+}

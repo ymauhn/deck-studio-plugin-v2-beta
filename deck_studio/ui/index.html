@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deck Studio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/ui/fonts.css">
+<link rel="stylesheet" href="/ui/style.css">
+<script type="module" src="/ui/app.js"></script>
+</head>
+<body>
+<header class="top">
+  <h1>Deck Studio</h1>
+  <p id="project" class="project" hidden></p>
+  <p class="usage" title="Uso da sua assinatura do Claude"><span id="usage-5h">limite de 5 h: –</span><span id="usage-7d">semana: –</span></p>
+</header>
+
+<section class="pane files" aria-labelledby="files-h">
+  <h2 id="files-h">Arquivos</h2>
+</section>
+
+<section class="pane deck" aria-labelledby="deck-h">
+  <h2 id="deck-h" class="sr-only">Deck</h2>
+  <iframe id="deck-frame" src="/deck" title="Deck"></iframe>
+  <div class="deck-bar">
+    <button id="pick" class="btn" type="button" aria-pressed="false" aria-keyshortcuts="S">Selecionar (S)</button>
+  </div>
+</section>
+
+<section class="pane chat" aria-labelledby="chat-h">
+  <div class="chat-head">
+    <h2 id="chat-h">Chat</h2>
+    <div class="chat-tools">
+      <select id="model" aria-label="Modelo">
+        <option value="opus">Opus</option>
+        <option value="sonnet">Sonnet</option>
+        <option value="haiku">Haiku</option>
+      </select>
+    </div>
+  </div>
+  <div class="chat-tabs">
+    <div id="chat-tabs" class="tabs" role="tablist" aria-label="Chats"></div>
+    <button id="new-chat" class="icon-btn" type="button" aria-label="Novo chat" title="Novo chat">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <span class="tab-actions">
+      <button id="rename-chat" class="icon-btn" type="button" aria-label="Renomear chat" title="Renomear chat (F2)">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="close-chat" class="icon-btn" type="button" aria-label="Fechar chat" title="Fechar chat">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </span>
+  </div>
+  <div id="conversations" class="conversations"></div>
+  <form id="composer" class="composer">
+    <ul id="chips" class="chips" aria-label="Seleção"></ul>
+    <p id="waiting" class="waiting" role="status" hidden>Aguardando o pedido em andamento terminar. Sua mensagem vai em seguida.</p>
+    <div class="compose-row">
+      <label class="sr-only" for="message">Mensagem</label>
+      <textarea id="message" rows="3" placeholder="Peça uma mudança"></textarea>
+      <button id="stop" class="stop" type="button" aria-label="Parar" title="Parar o pedido" hidden>
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+      </button>
+      <button class="send" type="submit" aria-label="Enviar">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </form>
+</section>
+</body>
+</html>

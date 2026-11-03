@@ -1,0 +1,10 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html", "old_string": "Label matrix density",
+                                 "new_string": "<img src=\"img/no-such-image.png\" alt=\"\">Label matrix density" } },
+    { "say": "Contexto: {{context}}" },
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "<img src=\"img/no-such-image.png\" alt=\"\">", "new_string": "" } },
+    { "say": "Contexto depois de corrigir: {{context}}" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "beamer/apresentacao/apresentacao.tex",
+                                 "old_string": "Still compiles.", "new_string": "Still compiles, live." } },
+    { "wait": 4000 },
+    { "say": "Mudei o último frame." }
+  ]
+}

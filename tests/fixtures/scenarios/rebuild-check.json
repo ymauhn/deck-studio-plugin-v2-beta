@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "mcp": "rebuild_deck" },
+    { "mcp": "check_slide", "input": { "slide": 2 } },
+    { "say": "Conferi: {{result}}" }
+  ]
+}

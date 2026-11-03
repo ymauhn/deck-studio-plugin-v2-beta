@@ -1,0 +1,9 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "The official CAFA5 test labels", "new_string": "The CAFA5 test labels" } },
+    { "say": "Editei as notas e vou continuar." },
+    { "wait": 30000 },
+    { "say": "Esta resposta não deveria aparecer." }
+  ]
+}

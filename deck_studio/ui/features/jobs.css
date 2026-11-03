@@ -1,0 +1,19 @@
+/* Jobs: the top-bar buttons (Publicar in orange, as it goes out to the web) and the Tarefas drawer under the deck. */
+.jobs-bar { display: flex; gap: 8px; }
+.jobs-bar .btn:disabled { opacity: .55; cursor: progress; }
+.btn.publish { background: var(--net-t); border-color: var(--net); color: var(--net-ink); }
+
+#jobs { position: relative; max-height: 42%; padding: 10px 12px; background: var(--panel); border: 1px solid var(--hair); border-radius: 6px; }
+#jobs[hidden] { display: none; }
+.jobs-close { position: absolute; top: 6px; right: 8px; padding: 5px 10px; font-size: 12px; }
+.jobs-list { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.job-head { margin: 0; display: flex; align-items: baseline; gap: 10px; font-size: 13px; }
+.job-state { color: var(--ink2); }
+.job[data-state="ok"] .job-state { color: var(--fuse-ink); }
+.job[data-state="error"] .job-state { color: var(--warn); }
+.job-log {
+  margin: 6px 0 0; max-height: 9.5em; overflow: auto; padding: 8px 10px; border-radius: 4px;
+  background: var(--sunk); color: var(--ink2); font: 12px/1.45 var(--font-data); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.job-file { margin: 6px 0 0; font-size: 13px; }
+.job-file code { font: 12px var(--font-data); }

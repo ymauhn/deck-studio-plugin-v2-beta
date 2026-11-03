@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "tool": "Write", "input": { "file_path": "deck/src/slides/01-introducao.html",
+                                  "content": "<section class=\"slide\" id=\"s02\" data-part=\"Introdução\">\n<h2 class=\"title\">O que o trabalho faz</h2>\n<div class=\"bd\">\n  <ul class=\"b col-main\">\n    <li>O modelo anota 42 proteínas com uma rede de interação.</li>\n  </ul>\n</div>\n<aside class=\"notes\"><p>Fonte: p. 1.</p></aside>\n</section>\n" } },
+    { "say": "Criei o primeiro slide a partir do PDF." }
+  ]
+}

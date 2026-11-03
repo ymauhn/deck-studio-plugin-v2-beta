@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "wait": 2000 },
+    { "say": "Pronto, terminei." }
+  ]
+}

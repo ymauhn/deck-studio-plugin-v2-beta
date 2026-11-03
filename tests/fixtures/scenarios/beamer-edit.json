@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "beamer/palestra/talk.tex",
+                                 "old_string": "Thanks for listening.", "new_string": "Thank you for listening." } },
+    { "say": "Mudei o agradecimento." }
+  ]
+}

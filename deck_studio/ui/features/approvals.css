@@ -1,0 +1,18 @@
+/* Approval cards: orange (Claude) while the agent waits for the author; quiet once answered. */
+.approval {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; font-size: 13px;
+  background: var(--net-t); border: 1px solid var(--net); border-radius: 10px;
+}
+.approval p { margin: 0; }
+.approval-what { color: var(--ink); }
+/* the whole tool input: every line kept, long ones wrapped, a long input scrolls inside the card */
+.approval-input {
+  margin: 0; max-height: 18em; overflow: auto; padding: 8px 10px; border-radius: 6px;
+  background: var(--raised); border: 1px solid var(--hair); color: var(--ink);
+  font: 12px/1.45 var(--font-data); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.approval-why { color: var(--ink2); }
+.approval-actions { display: flex; gap: 8px; }
+.approval[data-state] { background: var(--raised); border-color: var(--hair); }
+.approval-state { font-weight: 600; color: var(--ink2); }
+.approval[data-state="allow"] .approval-state { color: var(--fuse-ink); }

@@ -1,0 +1,11 @@
+{
+  "steps": [
+    { "tool": "Read", "input": { "file_path": "deck/src/slides/03-data.html" } },
+    { "tool": "Glob", "input": { "pattern": "deck/src/slides/*.html" } },
+    { "tool": "Grep", "input": { "pattern": "Labels per", "path": "deck/src/slides" } },
+    { "tool": "Write", "input": { "file_path": "context/notas.md", "content": "# Notas\n" } },
+    { "tool": "Edit", "input": { "file_path": "context/notas.md", "old_string": "# Notas", "new_string": "# Notas do autor" } },
+    { "tool": "Write", "input": { "file_path": "data/x.txt", "content": "x" } },
+    { "say": "Feito." }
+  ]
+}

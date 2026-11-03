@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "mcp": "compile_beamer" },
+    { "mcp": "screenshot_beamer_page", "input": { "page": 3, "path": "beamer/apresentacao/apresentacao.tex" } },
+    { "say": "Vi: {{result}}" }
+  ]
+}

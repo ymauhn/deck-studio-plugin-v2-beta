@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "mcp": "rebuild_deck" },
+    { "say": "Resultado: {{result}}" }
+  ]
+}

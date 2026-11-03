@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "say": "Recebi: {{selection_raw}}" }
+  ]
+}

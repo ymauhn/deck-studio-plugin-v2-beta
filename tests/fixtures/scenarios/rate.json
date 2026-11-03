@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "rate": { "five_hour": 0.12, "seven_day": 0.5 } },
+    { "say": "Uso atualizado." }
+  ]
+}

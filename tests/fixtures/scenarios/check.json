@@ -1,0 +1,15 @@
+{
+  "steps": [
+    { "mcp": "check_slide", "input": { "slide": 13 } },
+    { "say": "Antes: {{result}}" },
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "<h2 class=\"title\">Data: a CAFA5-derived corpus</h2>",
+                                 "new_string": "<h2 class=\"title\">Data: a CAFA5-derived corpus</h2><div style=\"width:200px;height:30px;overflow:hidden\">long text long text long text long text long text long text long text</div><div style=\"position:relative;left:1500px;width:300px\">fora do quadro</div>" } },
+    { "mcp": "check_slide", "input": { "slide": 13 } },
+    { "say": "Depois: {{result}}" },
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/03-data.html",
+                                 "old_string": "<div style=\"width:200px;height:30px;overflow:hidden\">long text long text long text long text long text long text long text</div><div style=\"position:relative;left:1500px;width:300px\">fora do quadro</div>",
+                                 "new_string": "" } },
+    { "say": "Desfeito." }
+  ]
+}

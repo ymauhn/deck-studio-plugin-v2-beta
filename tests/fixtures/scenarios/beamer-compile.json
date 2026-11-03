@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "mcp": "compile_beamer" },
+    { "say": "Resultado: {{result}}" }
+  ]
+}

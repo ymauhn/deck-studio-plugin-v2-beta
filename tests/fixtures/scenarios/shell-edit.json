@@ -1,0 +1,9 @@
+{
+  "steps": [
+    { "approval": "PowerShell", "input": {
+        "command": "(Get-Content deck/src/slides/03-data.html -Raw) -replace '(?<=STRING v11.5: one aggregated network</h2>)', $caixa | Set-Content deck/src/slides/03-data.html",
+        "description": "Add a box to the STRING slide" } },
+    { "mcp": "check_slide", "input": { "slide": 14 } },
+    { "say": "Depois do comando: {{result}}" }
+  ]
+}

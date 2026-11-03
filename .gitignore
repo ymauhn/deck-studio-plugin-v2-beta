@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+test-results/
+playwright-report/
+# app outputs
+dist/
+build/
+exports/
+*.log

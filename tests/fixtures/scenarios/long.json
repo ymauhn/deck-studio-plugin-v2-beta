@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "say": "Vou demorar." },
+    { "wait": 30000 },
+    { "say": "Esta resposta não deveria aparecer." }
+  ]
+}
