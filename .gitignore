@@ -4,8 +4,17 @@ __pycache__/
 .pytest_cache/
 test-results/
 playwright-report/
-# app outputs
+.playwright-mcp/
+*.log
+
+# saídas do app e dos decks
 dist/
 build/
 exports/
-*.log
+
+# nunca subir um deck pessoal, a dissertação ou os dados de um kit
+nexusgo_deck_kit/
+source/
+data/
+context/
+*.pdf
