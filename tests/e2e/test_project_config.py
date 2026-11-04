@@ -55,7 +55,7 @@ def test_a_beamer_project_starts_in_beamer_mode(api):
         assert (project["title"], project["format"], project["startMode"]) == ("Aula", "beamer", "beamer")
         assert project["beamerStart"] == "beamer/apresentacao/apresentacao.tex"
         # no Exportar PDF of the HTML deck, which the agent never writes here: the Beamer view opens the deck's PDF
-        assert project["jobs"] == ["overleaf"]
+        assert project["jobs"] == []  # Overleaf: the Beamer bar's Exportar para o Overleaf
     finally:
         remove_kit_copy(kit)
 
