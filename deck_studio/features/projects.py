@@ -28,6 +28,7 @@ from starlette.datastructures import UploadFile
 
 from deck_studio import projects
 from deck_studio.__main__ import DEFAULT_KIT
+from deck_studio.core import plataforma
 from deck_studio.features.files import plain
 from deck_studio.server.api import ApiError, json_body
 
@@ -39,12 +40,14 @@ KEPT = {".pdf", ".md", ".txt", ".tex", ".bib", ".csv", ".json", ".png", ".jpg", 
 IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
 BUILTIN = "NEXUS-GO (kit da defesa)"  # the default kit, in the list; its studio's data dir is the home
 NOT_EMPTY = "Esta pasta já existe e tem arquivos. Escolha uma pasta nova ou vazia."
-EXAMPLE = "C:\\Users\\voce\\Deck Studio\\Projeto"
+EXAMPLE = "C:\\Users\\voce\\Deck Studio\\Projeto" if plataforma.WINDOWS else "/home/voce/Deck Studio/Projeto"
 # Windows paths stop at 260 characters here (LongPathsEnabled is 0): the project's own paths add up to about 75
 # (context/<slug>/figuras/p001-1.png, context/<pdf>), and the agent's files need room too
 FOLDER_LIMIT = 150
 TEX_UNSAFE = re.compile(r"[%~${}]")  # latexmk refuses a path with % ~ $, and braces break TeX's file names
 DISK = re.compile(r"(?:[\\/]{2}[?.][\\/])?[A-Za-z]:[\\/]")  # C:\... or \\?\C:\...: a disk of this PC, not a share
+if not plataforma.WINDOWS:
+    DISK = re.compile(r"/(?!/)")  # an absolute path
 NOTES_LIMIT = 1000  # characters: they travel in the query
 SCANNED_WORDS = 5  # per page, at most: a scan has no text, or a stamp's few words
 SCANNED = ("Este PDF quase não tem texto selecionável: parece escaneado. O agente vai ler as páginas como imagens, o que "

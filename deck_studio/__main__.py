@@ -10,31 +10,30 @@ for _name in [n for n in os.environ if n.upper().startswith(("ANTHROPIC_", "CLAU
 
 import argparse  # noqa: E402
 import asyncio  # noqa: E402
-import ctypes  # noqa: E402
-import msvcrt  # noqa: E402
 import socket  # noqa: E402
 import sys  # noqa: E402
 import threading  # noqa: E402
 import webbrowser  # noqa: E402
-from ctypes import wintypes  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 import uvicorn  # noqa: E402
 
 from deck_studio import projects  # noqa: E402
 from deck_studio.config import load_config  # noqa: E402
+from deck_studio.core import plataforma  # noqa: E402
 from deck_studio.server.app import create_app  # noqa: E402
 from deck_studio.server.state import StudioState  # noqa: E402
 
 DEFAULT_KIT = r"C:\Users\Yeonatan\OneDrive\Desktop\nexusgo_deck_kit"
-DEFAULT_DATA = Path(os.environ.get("LOCALAPPDATA", ".")) / "deck-studio"  # the default kit's, and the home
+DEFAULT_DATA = plataforma.data_home()  # the default kit's, and the home
 
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(prog="python -m deck_studio", description="Deck Studio: local AI editor for slide decks.")
     p.add_argument("--kit", default=DEFAULT_KIT, help="deck kit root")
     p.add_argument("--port", type=int, default=0, help="0 picks a free port")
-    p.add_argument("--data", help="app data dir (default: %%LOCALAPPDATA%%\\deck-studio; a project's own, under --home)")
+    p.add_argument("--data", help="app data dir (default: %%LOCALAPPDATA%%\\deck-studio, or ~/.local/share/deck-studio on Linux; a "
+                                                   "project's own, under --home)")
     p.add_argument("--config", help="JSON file merged over the deck adapter config")
     p.add_argument("--fake-agent", help="scenarios dir: use the scripted agent instead of Claude")
     p.add_argument("--no-open", action="store_true", help="do not open the browser")
@@ -47,6 +46,20 @@ def parse_args(argv=None):
 def watch_parent(pid):
     """Exit as soon as process `pid` ends, however it ends: a project's studio never outlives the studio that started
     it, even when that one is killed without a chance to stop its children."""
+    if not plataforma.WINDOWS:  # ponytail: a check a second, so up to 1 s late; pidfd_open when that matters
+        def poll():
+            while True:
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    os._exit(0)
+                except PermissionError:
+                    pass
+                threading.Event().wait(1)
+        threading.Thread(target=poll, name="parent-watchdog", daemon=True).start()
+        return
+    import ctypes
+    from ctypes import wintypes
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
     kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
     kernel32.OpenProcess.restype = wintypes.HANDLE
@@ -67,10 +80,10 @@ def lock_data_dir(data_dir):
 
     The lock is on a byte far past the file's text, which is the running studio's URL, so others can read it."""
     data_dir.mkdir(parents=True, exist_ok=True)
-    fd = os.open(data_dir / "studio.lock", os.O_RDWR | os.O_CREAT | os.O_BINARY)
+    fd = os.open(data_dir / "studio.lock", os.O_RDWR | os.O_CREAT | plataforma.O_BINARY)
     os.lseek(fd, 1 << 30, os.SEEK_SET)
     try:
-        msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)  # the OS drops it when this process ends, however it ends
+        plataforma.lock_byte(fd)  # the OS drops it when this process ends, however it ends
     except OSError:
         os.close(fd)
         return None

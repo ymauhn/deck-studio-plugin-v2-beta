@@ -11,11 +11,15 @@ from pathlib import Path
 
 import pymupdf
 
+from deck_studio.core import plataforma
+
 BEAMER_CLASS = re.compile(r"^[^%\n]*\\documentclass(\[[^\]]*\])?\{beamer\}", re.M)
 # latexmk switches. Never LuaLaTeX: its Lua code writes files in the project folder even with shell escape
 # off (io.open('latexmkrc', 'w') lands there); a lualatex magic comment falls back to the preamble rule
 ENGINES = {"pdflatex": "-pdf", "xelatex": "-xelatex"}
 TIMEOUT = 300
+# MiKTeX's switch for no log wrapping; TeX Live has no such switch and reads max_print_line (tex_env)
+LOG_WIDTH = ["-max-print-line=10000"] if plataforma.WINDOWS else []
 # \input, \include and \includegraphics reach only files under the folder TeX runs in (no absolute path, no ..): the
 # agent writes the .tex with no approval, and a page holding another file of this computer would reach the agent's
 # screenshots and the author's PDF. ponytail: MiKTeX does not apply it to \openin + \read; only a sandbox closes that
@@ -23,7 +27,7 @@ SAFE_INPUTS = {"MIKTEX_CORE_ALLOWUNSAFEINPUTFILES": "false"}
 # MiKTeX's latexmk is a Perl script: without a perl on PATH it stops with "could not find the script engine 'perl'"
 # (2026-11-04: the studio, opened from Explorer, does not have Git's usr/bin on its PATH). Where to look besides PATH:
 # (not C:\Strawberry: any user may create a folder at the root of C:, and the studio would run that perl.exe)
-PERL_PLACES = [r"%ProgramFiles%\Git\usr\bin", r"%ProgramFiles(x86)%\Git\usr\bin", r"%LOCALAPPDATA%\Programs\Git\usr\bin",
+PERL_PLACES = [] if not plataforma.WINDOWS else [r"%ProgramFiles%\Git\usr\bin", r"%ProgramFiles(x86)%\Git\usr\bin", r"%LOCALAPPDATA%\Programs\Git\usr\bin",
                r"%ProgramFiles%\Strawberry\perl\bin"]
 NO_PERL = ("O latexmk precisa do Perl, e nenhum foi achado (nem no PATH, nem no Git for Windows, nem no Strawberry "
            "Perl): o studio compilou com o pdflatex e o bibtex direto. Para usar o latexmk, instale o Git for Windows "
@@ -45,7 +49,9 @@ def find_perl(path=None, places=PERL_PLACES):
 def tex_env(perl=None):
     """The TeX tools' environment: safe inputs, and perl's folder at the end of PATH, for them only (at the end,
     nothing in that folder shadows a TeX tool)."""
-    env = {**os.environ, **SAFE_INPUTS}
+    # max_print_line: no log wrapping, so errors parse; MiKTeX takes it as the -max-print-line switch, TeX Live's
+    # kpathsea reads it from the environment (it overrides texmf.cnf)
+    env = {**os.environ, **SAFE_INPUTS, "max_print_line": "10000"}
     if perl:
         env["PATH"] = env.get("PATH", "") + os.pathsep + perl
     return env
@@ -54,12 +60,12 @@ def tex_env(perl=None):
 def run(argv, cwd, env=None):
     """Run a TeX tool; on timeout stop its whole process tree (latexmk starts perl and the engine)."""
     p = subprocess.Popen(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                         encoding="utf-8", errors="replace", creationflags=subprocess.CREATE_NO_WINDOW,
+                         encoding="utf-8", errors="replace", creationflags=plataforma.NO_WINDOW, **plataforma.NEW_GROUP,
                          env=env or tex_env())
     try:
         out = p.communicate(timeout=TIMEOUT)[0]
     except subprocess.TimeoutExpired:
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(p.pid)], capture_output=True)
+        plataforma.kill_tree(p.pid)
         out = p.communicate()[0] + f"\ntimeout after {TIMEOUT} s"
     return p.returncode, out
 
@@ -116,7 +122,7 @@ def _without_latexmk(tex, text, src, work, cwd, env):
     citations, then the references and the page numbers settle). Returns (exit code of the last run, output, the
     bibliography tool's error or None): bibtex and biber exit with 2 or more on an error (1 is warnings only)."""
     engine = [tex, "-synctex=1", "-interaction=nonstopmode", "-file-line-error", "-no-shell-escape",
-              "-max-print-line=10000", f"-output-directory={work}", str(src)]
+              *LOG_WIDTH, f"-output-directory={work}", str(src)]
     code, out = run(engine, cwd, env)
     outs, bib_error = [out], None
     tool = _bib_after_first_pass(work, src.stem) or _bib_tool(text)
@@ -173,7 +179,7 @@ def compile(project, work_dir, frame=None, perl=...):
     bib_error = None
     if perl:
         code, out = run(["latexmk", "-norc", ENGINES[tex], "-synctex=1", "-interaction=nonstopmode", "-file-line-error",
-                         "-latexoption=-no-shell-escape", "-latexoption=-max-print-line=10000", f"-outdir={work}",
+                         "-latexoption=-no-shell-escape", *(f"-latexoption={a}" for a in LOG_WIDTH), f"-outdir={work}",
                          str(src)], main.parent, env)
     else:
         code, out, bib_error = _without_latexmk(tex, src.read_text(encoding="utf-8"), src, work, main.parent, env)
