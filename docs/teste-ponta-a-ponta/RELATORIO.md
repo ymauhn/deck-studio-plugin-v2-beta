@@ -13,7 +13,7 @@ O fluxo inteiro funcionou, e a publicação real está no ar: https://deck-studi
 | Ir para o slide | "3" e "B1" levaram ao slide certo, e o total mostra "de 10 + 1 de reserva". |
 | Editar pelo chat | A caixa do título do slide 3, selecionada e pedida em português, foi encurtada pelo agente, com Desfazer e Ver diff. |
 | Seguir o agente | Com o deck no slide 1, o agente editou o 3, e o deck foi sozinho ao 3. |
-| Edição direta | O duplo clique, o texto e Enter gravaram no arquivo. O texto entrou antes de uma fórmula inline: é o achado 3. |
+| Edição direta | O duplo clique, o texto e Enter gravaram no arquivo. Na tomada original, o texto entrou no meio da frase (achado 4); a tomada nova, depois do conserto, está certa. |
 | Cadastrar o link e publicar | Na gravação: o cadastro do site, a confirmação e o Publicar, contra o Netlify falso local. A publicação real foi feita depois, no mesmo projeto. |
 | O resultado no ar | HTTP 200, título certo, 10 + 1 slides, `X-Robots-Tag: noindex, nofollow` e `robots.txt` com Disallow (`bruto/no-ar.json`). |
 
@@ -22,7 +22,7 @@ O fluxo inteiro funcionou, e a publicação real está no ar: https://deck-studi
 1. **Seguir o agente, num projeto novo** (consertado, PR #12, já na `main`): a edição recarrega o deck, e o studio o devolvia ao lugar de antes. Foi achado na primeira gravação, em 1600×900, e a regravação em 1080p já mostra o conserto.
 2. **Cartão de aprovação por 10 min** (no PR de achados): no nível padrão, um `find`/`cat` só de leitura do agente pediu aprovação e prendeu o pedido por 10 min. O conserto deixa passar a leitura dentro do deck e reduz o prazo do cartão para 2 min, com o aviso no próprio cartão.
 3. **Uma mensagem do agente em inglês** (no PR de achados): a regra do português foi reforçada no prompt do sistema, no `CLAUDE.md` do projeto e na skill.
-4. **Edição direta e fórmula inline** (no PR de achados): o End parava antes da fórmula, e o texto entrava no meio da frase. Agora o End leva o cursor para depois dela.
+4. **Edição direta** (PRs #14 e #15): o texto entrou no meio da frase. A causa era o End nativo, que vai ao fim da linha visual numa caixa que quebra (#15); o #14 cobre ainda a caixa que termina numa fórmula inline. A tomada nova está em `bruto/edicao-direta-1080p.mp4`.
 5. **A gravação não aprova cartões:** o teste não aprovou nenhum pedido do agente por fora (o classificador de segurança bloqueou a tentativa, com razão). A instância de teste nega um cartão sem resposta em 30 s.
 
 ## Material

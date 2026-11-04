@@ -22,12 +22,12 @@ Para a sessão de vídeos (videos-r4). O material vai virar um comercial de 2 a 
 | 4 | Ir para o slide | projeto | 190,2 s | 196,7 s | Digite o número, ou B1 para um slide de reserva, e o deck vai direto. |
 | 5 | Editar pelo chat | projeto | 196,7 s | 205,1 s | Clique numa caixa e peça a mudança em português. |
 | 6 | Seguir o agente | projeto | 205,1 s | 220,2 s | O deck vai sozinho ao slide que o agente está editando. |
-| 7 | Edição direta | projeto | 220,2 s | 227,5 s | Duplo clique no texto e edite ali mesmo. |
+| 7 | Edição direta | edicao-direta | 5,3 s | 13,1 s | Duplo clique no texto e edite ali mesmo. |
 | 8 | Cadastrar link e publicar | projeto | 227,5 s | 245,5 s | Cadastre um site e publique o deck com um clique. |
 | 9 | O resultado no ar | no-ar | 0,0 s | fim (cerca de 12 s) | O deck no ar, num link que se compartilha. |
 
 **Notas**
-- **Momento 7:** nesta tomada, o texto digitado entrou no meio da frase ("excentricidade (editado à mão)e semiamplitude"). É o bug do End antes de uma fórmula, que está no PR de achados. Depois do merge, uma tomada nova desse trecho vai para `bruto\` como `edicao-direta-1080p.mp4`.
+- **Momento 7:** use a tomada nova, `edicao-direta-1080p.mp4` (1920×1080, 13,1 s; o útil vai de 5,3 s a 13,1 s). Ela tem o mesmo item e o texto no fim certo, e foi feita depois dos consertos (PRs #14 e #15). Na tomada original do `projeto-1080p.mp4`, o texto entrou no meio da frase: o End ia ao fim da linha visual de uma caixa que quebra em duas linhas.
 - **Momento 8:** nesta gravação, o site é o Netlify falso local. A publicação real foi feita depois, pelo orquestrador, no mesmo projeto, e o momento 9 grava o resultado dela.
 - **Momento 9:** `no-ar-1080p.mp4` (1920×1080) abre https://deck-studio-teste-e2e-0411.netlify.app e passa 6 slides. A conferência (`no-ar.json`) deu:
   - HTTP 200 e o título "Seminário de métodos (mock)";
