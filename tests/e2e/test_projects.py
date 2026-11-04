@@ -524,7 +524,7 @@ def test_the_panel_creates_a_project_from_a_pdf_and_opens_it_in_a_new_tab_on_its
     form.get_by_label("PDF").set_input_files({"name": "Relatório anual.pdf", "mimeType": "application/pdf",
                                               "buffer": PDF})
     expect(form.get_by_label("Nome")).to_have_value("Relatório anual")
-    expect(form.get_by_label("Pasta")).to_have_value(str(folders / "Relatório anual"))
+    expect(form.get_by_role("textbox", name="Pasta")).to_have_value(str(folders / "Relatório anual"))
     expect(form.get_by_label("HTML (deck web)")).to_be_checked()
     expect(form.get_by_label("Português")).to_be_checked()
     # what the PDF cannot say (the time, the audience, the event) goes to the agent with the request
@@ -562,7 +562,7 @@ def test_the_panel_shows_why_the_studio_refused_an_import_and_closes_the_blank_t
     (used / "notas.txt").write_text("minhas notas", encoding="utf-8")
     form = new_form(panel_of(page))
     form.get_by_label("PDF").set_input_files({"name": "artigo.pdf", "mimeType": "application/pdf", "buffer": PDF})
-    form.get_by_label("Pasta").fill(str(used))
+    form.get_by_role("textbox", name="Pasta").fill(str(used))
     form.get_by_label("Beamer (LaTeX)").check()
     with page.expect_popup() as popup:
         form.get_by_role("button", name="Criar apresentação").click()
@@ -583,7 +583,7 @@ def test_a_pdf_with_a_long_file_name_makes_a_project_whose_paths_fit_windows(stu
     form.get_by_label("PDF").set_input_files({"name": LONG_PDF, "mimeType": "application/pdf", "buffer": PDF})
     name = "Beyond Learnable Graphs Fixed Multi Hop PPI Diffusion of"
     expect(form.get_by_label("Nome")).to_have_value(name)
-    expect(form.get_by_label("Pasta")).to_have_value(str(folders / name))
+    expect(form.get_by_role("textbox", name="Pasta")).to_have_value(str(folders / name))
     with page.expect_popup() as popup:
         form.get_by_role("button", name="Criar apresentação").click()
     expect(popup.value).to_have_title(f"{name} · Deck Studio", timeout=60_000)
@@ -597,7 +597,7 @@ def test_the_default_folder_leaves_out_the_characters_latex_refuses_in_a_path(st
     form.get_by_label("PDF").set_input_files({"name": "Custo de 30% {final}.pdf", "mimeType": "application/pdf",
                                               "buffer": PDF})
     expect(form.get_by_label("Nome")).to_have_value("Custo de 30% {final}")
-    expect(form.get_by_label("Pasta")).to_have_value(str(folders / "Custo de 30 final"))
+    expect(form.get_by_role("textbox", name="Pasta")).to_have_value(str(folders / "Custo de 30 final"))
 
 
 def test_the_panel_refuses_a_name_windows_cannot_use_before_it_opens_a_tab(studio_page):
