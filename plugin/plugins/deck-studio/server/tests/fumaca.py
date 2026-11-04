@@ -17,7 +17,7 @@ from playwright.async_api import async_playwright
 
 SERVER = Path(__file__).resolve().parent.parent
 TOOLS = {"novo_projeto", "construir", "screenshot_slide", "check_slide", "add_image", "run_qa", "compile_beamer",
-         "screenshot_beamer_page", "exportar", "verificar", "abrir_editor", "ler_selecao"}
+         "screenshot_beamer_page", "exportar", "verificar", "abrir_editor", "ler_selecao", "abrir_exemplo"}
 
 
 def pdf(path):

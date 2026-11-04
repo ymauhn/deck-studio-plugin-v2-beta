@@ -21,6 +21,8 @@ from deck_studio.render import Renderer
 from deck_studio.server.state import StudioState
 from deck_tools.editor import Editor
 
+# the example's own build and jobs call `python` by name: this server's Python (its venv has Pillow and the rest)
+os.environ["PATH"] = os.pathsep.join([str(Path(sys.executable).parent), os.environ.get("PATH", "")])
 QA = {"check": "qa/check_deck.py", "audit": "qa/audit_numbers.py", "shoot": "qa/shoot.py"}
 IMAGE_TYPES = {".png": ".png", ".jpg": ".jpg", ".jpeg": ".jpg", ".webp": ".webp", ".svg": ".svg"}
 KEPT = {".pdf", ".md", ".txt", ".tex", ".bib", ".csv", ".json", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
@@ -45,7 +47,7 @@ def data_dir(project):
 def project_of(projeto=None):
     """The project folder a tool works on, checked: it must hold a studio.json (a project from the template)."""
     path = Path(projeto or _current["path"] or os.getcwd()).resolve()
-    if not (path / "studio.json").is_file():
+    if not ((path / "studio.json").is_file() or (path / "deck" / "build.mjs").is_file()):  # a project, or the example
         raise Tool(f"{path} não é um projeto do Deck Studio (falta o studio.json). Crie um com novo_projeto, ou passe "
                    "a pasta do projeto em `projeto`.")
     _current["path"] = path
@@ -269,6 +271,33 @@ async def verificar() -> str:
         found = shutil.which(tool)
         lines.append(f"{tool}: {found}" if found else f"{tool}: falta. {how}")
     return "\n".join(lines)
+
+
+EXAMPLE = Path(__file__).resolve().parents[2] / "templates" / "exemplo-nexus-go"
+
+
+@mcp.tool()
+async def abrir_exemplo(pasta: str = "") -> str:
+    """Copia o deck de exemplo (a defesa NEXUS-GO, com o método completo: storyline, fatos, componentes interativos,
+    QA e Beamer) para uma pasta nova e o deixa pronto para abrir. pasta: o destino (padrão: <pasta da sessão>/
+    exemplo-nexus-go). Precisa do Node para construir."""
+    async def job():
+        target = Path(pasta).expanduser().resolve() if pasta else Path(os.getcwd()) / "exemplo-nexus-go"
+        if target.exists() and any(target.iterdir()):
+            raise Tool(f"{target} já existe e tem arquivos: escolha uma pasta nova ou vazia.")
+        await asyncio.to_thread(shutil.copytree, EXAMPLE, target, dirs_exist_ok=True)
+        _current["path"] = target
+        npm = shutil.which("npm")
+        if not npm:
+            return (f"Exemplo copiado para {target}. Falta o Node (nodejs.org) para construir o deck: instale e rode "
+                    "`npm ci` em deck/.")
+        code, out, _ = await run_command({"kitRoot": str(target / "deck")}, [npm, "ci", "--no-audit", "--no-fund"])
+        if code != 0:
+            return f"Exemplo copiado para {target}, mas o `npm ci` falhou:\n{out[-1500:]}"
+        build = await state_of(str(target)).builder.build_studio()
+        return (f"Exemplo pronto em {target}" + ("." if build["ok"] else f", mas o build falhou:\n{build['error']}") +
+                " Abra o editor (abrir_editor) para ver, ou leia docs/STORYLINE.md para o método.")
+    return await guarded(job())
 
 
 _editor = Editor()
