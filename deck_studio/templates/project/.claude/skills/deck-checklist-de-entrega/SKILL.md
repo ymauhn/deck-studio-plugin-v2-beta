@@ -1,6 +1,6 @@
 ---
 name: deck-checklist-de-entrega
-description: Use antes de entregar qualquer versão de um deck do Deck Studio, depois do `mcp__deck__run_qa` (qa/check_deck.py e qa/audit_numbers.py): as checagens que os revisores pegaram e os scripts não pegam, e os anti-padrões.
+description: "Use antes de entregar qualquer versão de um deck do Deck Studio, depois do `mcp__deck__run_qa` (qa/check_deck.py e qa/audit_numbers.py): as checagens que os revisores pegaram e os scripts não pegam, e os anti-padrões."
 ---
 
 # Checklist de entrega (complementa a RUBRICA e os scripts de QA)
