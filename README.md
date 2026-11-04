@@ -67,10 +67,11 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **Regenerar Beamer:** gera de novo a versão Beamer a partir do deck.
 - Nenhuma tarefa roda enquanto o agente está mudando o deck.
 
-## Criar uma apresentação a partir de um PDF
+## Criar uma apresentação a partir de um PDF ou de uma pasta
 
 1. Clique em **Projetos**, na barra de cima.
-2. Em **Nova apresentação a partir de um PDF**, solte o PDF na caixa ou clique nela para escolher. Vale um artigo, uma dissertação ou um relatório, de até 100 MB.
+2. Em **Nova apresentação a partir de um PDF ou de uma pasta**, solte o PDF na caixa ou clique nela para escolher. Vale um artigo, uma dissertação ou um relatório, de até 100 MB.
+   - **Ou escolha uma pasta** (ou solte vários arquivos de uma vez): PDFs, notas `.md`/`.txt`, `.tex`/`.bib`, `.csv` e imagens, até 100 MB juntos. Tudo vai para `context/`, e cada PDF é extraído numa pasta própria. O nome do projeto vem do nome da pasta, e o que não serve (um `.exe`, por exemplo) fica de fora, com aviso ao agente.
 3. Confira os campos:
    - **Nome:** vem do nome do arquivo e vira o título do projeto.
    - **Formato:** **HTML (deck web)** ou **Beamer (LaTeX)**.

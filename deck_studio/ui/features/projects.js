@@ -91,6 +91,12 @@ export default function projects(studio) {
   file.setAttribute('aria-labelledby', 'proj-pdf-l');
   const dropText = make('span', { className: 'proj-drop-text' });
   const drop = make('label', { className: 'proj-drop' }, file, svg(PDF_ICON, 'pdf'), dropText);
+  // or a folder (its PDFs, notes, .tex/.bib and images, all of them into context/), or several files dropped at once
+  const dir = make('input', { type: 'file', className: 'sr-only', multiple: true });
+  dir.webkitdirectory = true;
+  dir.setAttribute('aria-label', 'Escolher uma pasta');
+  const pickDir = make('button', { type: 'button', className: 'btn proj-pick-dir', textContent: 'Ou escolha uma pasta' });
+  pickDir.addEventListener('click', () => dir.click());
   const name = make('input', { id: 'proj-name', type: 'text', autocomplete: 'off', spellcheck: false, maxLength: 200 });
   const folder = make('input', { id: 'proj-folder', type: 'text', autocomplete: 'off', spellcheck: false, className: 'proj-path-input' });
   // what the PDF cannot say: the time of the talk, the audience, the event and its date, what to stress
@@ -115,8 +121,9 @@ export default function projects(studio) {
   // the fields scroll; the error, the steps, the status and the button stay below them, always in view
   form.append(
     make('div', { className: 'proj-fields' },
-      make('h3', { id: 'proj-new-h', textContent: 'Nova apresentação a partir de um PDF' }),
-      make('div', { className: 'proj-field' }, make('span', { id: 'proj-pdf-l', className: 'proj-label', textContent: 'PDF' }), drop),
+      make('h3', { id: 'proj-new-h', textContent: 'Nova apresentação a partir de um PDF ou de uma pasta' }),
+      make('div', { className: 'proj-field' }, make('span', { id: 'proj-pdf-l', className: 'proj-label', textContent: 'PDF ou pasta' }), drop,
+        dir, pickDir),
       make('div', { className: 'proj-field' }, make('label', { className: 'proj-label', htmlFor: name.id, textContent: 'Nome' }), name),
       formats, languages,
       make('div', { className: 'proj-field' }, make('label', { className: 'proj-label', htmlFor: folder.id, textContent: 'Pasta' }), folder),
@@ -130,6 +137,7 @@ export default function projects(studio) {
   document.body.append(dialog);
 
   let pdf = null; // the chosen File
+  let bundle = null; // or the chosen folder, or several files: [File]
   let base = ''; // where new projects go: <base>\<Nome> unless the author typed a folder
   let named = false; // the author typed the name
   let placed = false; // the author typed the folder
@@ -207,10 +215,14 @@ export default function projects(studio) {
 
   // ---------- the form ----------
   const showDrop = () => {
+    const pdfs = bundle?.filter((f) => /\.pdf$/i.test(f.name)).length;
     dropText.replaceChildren(...(pdf
       ? [make('b', { textContent: pdf.name }), make('span', { textContent: `${size(pdf.size)}. Clique ou solte outro para trocar.` })]
-      : [make('b', { textContent: 'Solte o PDF aqui' }), make('span', { textContent: 'ou clique para escolher. Até 100 MB.' })]));
-    drop.toggleAttribute('data-chosen', !!pdf);
+      : bundle
+        ? [make('b', { textContent: `${bundle.length} arquivos (${pdfs} PDF${pdfs === 1 ? '' : 's'})` }),
+          make('span', { textContent: `${size(bundle.reduce((n, f) => n + f.size, 0))}. Vão todos para context/.` })]
+        : [make('b', { textContent: 'Solte o PDF aqui' }), make('span', { textContent: 'ou clique para escolher. Até 100 MB.' })]));
+    drop.toggleAttribute('data-chosen', !!(pdf || bundle));
   };
   // <base>\<Nome>, shown to its end, where the project's own name is
   const autoFolder = () => {
@@ -234,12 +246,30 @@ export default function projects(studio) {
     if (f.size > LIMIT) return fail(formError, 'O PDF passa de 100 MB.');
     fail(formError, null);
     pdf = f;
+    bundle = null;
     if (!named) name.value = nameOf(f.name);
     autoFolder();
     showDrop();
   }
 
   file.addEventListener('change', () => choose(file.files[0]));
+  // a folder, or several files: the server keeps PDFs, .md, .txt, .tex, .bib, .csv, .json and images
+  const KEPT = /\.(pdf|md|txt|tex|bib|csv|json|png|jpe?g|webp|svg|gif)$/i;
+  function chooseMany(list) {
+    if (creating) return;
+    const files = [...list].filter((f) => KEPT.test(f.name));
+    done.hidden = steps.hidden = true;
+    if (!files.length) return fail(formError, 'Nenhum arquivo serve: use PDF, .md, .tex, .bib, .txt ou imagens.');
+    if (files.reduce((n, f) => n + f.size, 0) > LIMIT) return fail(formError, 'Os arquivos passam de 100 MB juntos.');
+    fail(formError, null);
+    bundle = files;
+    pdf = null;
+    const top = files[0].webkitRelativePath?.split('/')[0];
+    if (!named) name.value = top ? nameOf(top) : nameOf(files.find((f) => /\.pdf$/i.test(f.name))?.name ?? files[0].name);
+    autoFolder();
+    showDrop();
+  }
+  dir.addEventListener('change', () => chooseMany(dir.files));
   // a PDF dropped anywhere on the panel is taken (and never opened by the browser in place of the studio)
   dialog.addEventListener('dragover', (e) => {
     if (!e.dataTransfer?.types.includes('Files')) return;
@@ -251,7 +281,8 @@ export default function projects(studio) {
     if (!e.dataTransfer?.files.length) return;
     e.preventDefault();
     delete drop.dataset.over;
-    choose(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files.length > 1) chooseMany(e.dataTransfer.files);
+    else choose(e.dataTransfer.files[0]);
   });
   name.addEventListener('input', () => { named = !!name.value; autoFolder(); });
   folder.addEventListener('input', () => { placed = !!folder.value; autoFolder(); });
@@ -270,7 +301,7 @@ export default function projects(studio) {
     done.hidden = true;
     const title = name.value.trim();
     // what the browser can check goes before the tab opens: a refusal then opens and shuts no tab
-    const problem = !pdf ? 'Escolha o PDF da apresentação.' : !title ? 'Dê um nome ao projeto.' : NOT_PLAIN.test(title) ? NAME_RULE : null;
+    const problem = !pdf && !bundle ? 'Escolha o PDF ou a pasta da apresentação.' : !title ? 'Dê um nome ao projeto.' : NOT_PLAIN.test(title) ? NAME_RULE : null;
     if (problem) return fail(formError, problem);
     fail(formError, null);
     tab = blankTab(`${STEPS[0]} ${WAIT}`);
@@ -279,8 +310,16 @@ export default function projects(studio) {
       folder: folder.value.trim(), notes: notes.value.trim() });
     lock(true);
     step(1);
-    const { status, data } = await studio.api(`/api/projects/import?${query}`, pdf,
-      { headers: { 'Content-Type': 'application/pdf', 'x-file-name': encodeURIComponent(pdf.name) } });
+    let reply;
+    if (bundle) {
+      const body = new FormData();
+      for (const f of bundle) body.append('files', f, f.webkitRelativePath || f.name); // its path in the folder
+      reply = await studio.api(`/api/projects/import-files?${query}`, body);
+    } else {
+      reply = await studio.api(`/api/projects/import?${query}`, pdf,
+        { headers: { 'Content-Type': 'application/pdf', 'x-file-name': encodeURIComponent(pdf.name) } });
+    }
+    const { status, data } = reply;
     const opened = tab;
     creating = tab = null;
     lock(false);
@@ -294,8 +333,8 @@ export default function projects(studio) {
     done.replaceChildren(opened ? 'Pronto: o projeto abriu em outra aba. ' : 'O navegador não abriu a aba do projeto. ',
       openLink(data.url), ...(data.warning ? [` ${data.warning}`] : []));
     done.hidden = false;
-    pdf = null;
-    file.value = '';
+    pdf = bundle = null;
+    file.value = dir.value = '';
     named = placed = false;
     name.value = notes.value = '';
     autoFolder();

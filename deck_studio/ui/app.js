@@ -23,7 +23,7 @@ const listeners = () => {
 // ---------- server: JSON calls and one shared event stream ----------
 // GET without a body, POST with one (JSON, or raw for a Blob or ArrayBuffer); always resolves to {status, data}
 async function api(path, body, { method, headers } = {}) {
-  const raw = body instanceof Blob || body instanceof ArrayBuffer;
+  const raw = body instanceof Blob || body instanceof ArrayBuffer || body instanceof FormData; // the browser types them
   const init = { method: method ?? (body == null ? 'GET' : 'POST'), headers: { ...headers } };
   if (body != null) {
     init.body = raw ? body : JSON.stringify(body);
