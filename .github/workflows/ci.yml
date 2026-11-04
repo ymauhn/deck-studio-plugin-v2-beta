@@ -45,8 +45,10 @@ jobs:
           python-version: "3.12"
       - name: plugin/ made by scripts/montar_plugin.py
         run: uv run --no-project python scripts/montar_plugin.py --check
-      - name: MCP server smoke test (stdio)
+      - name: MCP server smoke test (stdio, started as .mcp.json says)
         working-directory: plugin/plugins/deck-studio/server
+        env:
+          UV_PROJECT_ENVIRONMENT: ${{ github.workspace }}/plugin/plugins/deck-studio/server/.venv
         run: |
           uv sync --locked
           uv run playwright install --with-deps chromium

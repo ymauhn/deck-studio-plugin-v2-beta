@@ -30,7 +30,7 @@ LIMIT = 100 * 1024 * 1024  # bytes a new project's sources may take, together
 
 mcp = MCPServer("deck", instructions=(
     "Ferramentas do Deck Studio para apresentações (HTML e Beamer) feitas a partir de um artigo, uma tese ou uma pasta. "
-    "Comece com novo_projeto; a skill deck-studio:criar-apresentacao conduz o método. Responda ao autor em português."))
+    "Comece com novo_projeto; a skill deck-studio:criar-apresentacao conduz o método. Responda ao autor no idioma em que ele escreve."))
 _states, _current = {}, {"path": None}
 
 
@@ -246,6 +246,33 @@ async def exportar(projeto: str = "") -> str:
                 return f"Erro: {name} falhou:\n{out[-3000:]}"
         out_file = st.config["jobOutputs"].get(name)
         return f"{name} pronto" + (f": {st.kit_root / out_file}" if out_file else ".")
+    return await guarded(job())
+
+
+@mcp.tool()
+async def publicar(site: str = "", projeto: str = "") -> str:
+    """Publica o deck HTML no Netlify, como um site de uma página com noindex, pelo login do Netlify deste computador
+    (`netlify login`, da Netlify CLI). site: o nome do site novo (fica NOME.netlify.app), só na primeira vez; depois o
+    projeto lembra o site cadastrado (deck/tools/netlify-site.json). O deck fica público nesse endereço: confirme com o
+    autor antes de chamar."""
+    async def job():
+        st = state_of(projeto)
+        script = "deck/tools/publish_netlify.py"
+        if not (st.kit_root / script).is_file():
+            raise Tool("Este projeto não publica no Netlify (falta deck/tools/publish_netlify.py): só os decks HTML do "
+                       "modelo de projeto.")
+        steps = []
+        if not (st.kit_root / "deck/tools/netlify-site.json").is_file():
+            if not site:
+                raise Tool("Diga o nome do site novo (ele fica NOME.netlify.app) para cadastrar o projeto.")
+            steps.append([sys.executable, "-I", script, "register", "--name", site, "--create"])
+        steps += [st.config["cleanBuild"], [sys.executable, "-I", script]]
+        out = ""
+        for argv in steps:
+            code, out, _ = await run_command(st.config, argv)
+            if code != 0:
+                return f"Erro: a publicação parou em `{' '.join(argv[2:]) or argv[0]}`:\n{out[-2000:]}"
+        return out.strip()[-1500:]
     return await guarded(job())
 
 
