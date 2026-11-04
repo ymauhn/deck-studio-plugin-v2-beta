@@ -23,6 +23,7 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **Comentar (C):** deixa uma nota numa caixa. As notas se juntam num lote, e você manda o lote para o chat de uma vez.
 - **Mover (M):** arrasta e redimensiona a caixa selecionada no grid de 12 colunas.
 - **Origem:** passe o mouse sobre um número para ver a linha da dissertação de onde ele vem.
+- **Seguir o agente** (ligado por padrão): enquanto o agente edita, o deck vai sozinho para o slide de cada escrita, no último passo, e a caixa alterada pisca. O botão desliga e liga, e a escolha fica. Se você navegar à mão durante um pedido, ele pausa até o próximo pedido.
 - **HTML | Beamer:** troca para a versão Beamer.
   - Na versão acadêmica (`beamer/academico`), um clique num frame mostra a fonte LaTeX dele.
   - Para salvar a fonte, use Ctrl+S: o frame recompila.
@@ -46,8 +47,11 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **Autonomia:** a chave acima da caixa de mensagem vale para todos os chats, a partir da próxima ação do agente.
   - **Perguntar sempre:** toda escrita, comando e acesso à web espera o seu **Permitir**.
   - **Editar o deck** (o padrão): edita os arquivos do deck sem perguntar. Comandos, web e os scripts do deck pedem aprovação.
-  - **Autônomo:** também roda comandos locais, lê fora do deck e consulta a web sem perguntar.
-  - **Em qualquer nível:** a escrita fora do deck continua barrada, a dissertação e os arquivos gerados continuam protegidos, e os scripts do deck pedem aprovação. Um comando que publica, usa a rede ou sai da pasta do deck também pede.
+  - **Autônomo:** também lê fora do deck e roda, sem perguntar, os comandos do próprio deck e os de leitura.
+    - Do deck: o build (`node deck/build.mjs`, com ou sem `--pt`), o QA (`qa/*.py`), o `export_pdf.py`, o build do Beamer e o TeX (`pdflatex`, `bibtex`, `latexmk -norc`).
+    - De leitura: `ls`, `cat`, `grep`, `diff`, `sed -n` e afins.
+    - Ainda pedem: um comando que grava num arquivo (`>`, heredoc, `cp`, `mv`, `python -c`), um script que não é do deck e qualquer comando fora dessas listas.
+  - **Em qualquer nível:** a escrita fora do deck continua barrada; a dissertação e os arquivos gerados continuam protegidos; e o código que o studio roda (os `.js` do deck, o build, as ferramentas, os scripts de QA, as configurações do Claude) pede aprovação. Publicar, a rede (incluindo a busca na web) e o `git push` também pedem.
 - **Aprovações:** o que o nível de autonomia não libera espera o seu **Permitir** ou **Negar**. O cartão mostra o pedido inteiro, com todas as linhas.
 - **Erros:** se o agente parar no meio de um pedido, o chat diz o que houve e o que fazer, em geral mandar a mensagem de novo. O texto técnico fica dobrado em **Detalhe técnico**, e uma ferramenta que ficou sem resposta aparece em cinza, com "sem resultado".
 

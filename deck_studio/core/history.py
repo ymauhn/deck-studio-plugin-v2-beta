@@ -89,6 +89,14 @@ class History:
 
     snapshot = before_write  # the name docs/PYTHON.md uses for the PreToolUse hook
 
+    def before_text(self, turn_id, path):
+        """The text a file had before the turn's first write to it; None when unknown or the file was new."""
+        t, p = self.turns.get(turn_id), os.path.abspath(os.path.join(self.kit_root, path))
+        f = next((f for f in (t or {}).get("files", []) if f["path"].lower() == p.lower()), None)
+        if not f or f["before"] is None:
+            return None
+        return base64.b64decode(f["before"]).decode("utf-8", "replace")
+
     def end(self, turn_id):
         t = self.turns[turn_id]
         for f in t["files"]:
