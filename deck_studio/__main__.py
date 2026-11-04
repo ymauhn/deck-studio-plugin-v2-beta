@@ -145,4 +145,6 @@ async def main(args):
 
 
 if __name__ == "__main__":
+    for _stream in (sys.stdout, sys.stderr):  # the messages are in Portuguese: UTF-8 whatever the console's code page
+        _stream.reconfigure(encoding="utf-8")
     sys.exit(asyncio.run(main(parse_args())))

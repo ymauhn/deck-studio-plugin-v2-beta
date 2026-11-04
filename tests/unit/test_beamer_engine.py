@@ -240,7 +240,10 @@ def academic_pdf():
     """A copy of the kit's hand-written deck (pdfLaTeX, 48 frames, 55 pages), compiled once per session."""
     with tempfile.TemporaryDirectory(prefix="deck-studio-academico-") as d:
         src = Path(d) / "academico"
-        shutil.copytree(Path(os.environ.get("STUDIO_KIT") or REAL_KIT) / "beamer" / "academico", src)
+        kit = Path(os.environ.get("STUDIO_KIT") or REAL_KIT)
+        if not (kit / "beamer" / "academico").is_dir():
+            pytest.skip("needs the deck kit's academic deck")
+        shutil.copytree(kit / "beamer" / "academico", src)
         result = engine.compile({"kind": "handwritten", "main": str(src / "nexus-go-academic.tex")}, Path(d) / "work")
         assert result["ok"], result["errors"]
         yield result["pdf"], src / "nexus-go-academic.tex"
@@ -280,6 +283,8 @@ def test_locate_on_the_academic_deck_finds_titles_and_bullets(academic_pdf, pno,
 def generated_kit(tmp):
     """A kit-like folder with the generated deck's outputs (never compiled here): PDF, .nav, sources, layout.json."""
     kit = Path(os.environ.get("STUDIO_KIT") or REAL_KIT)
+    if not (kit / "beamer" / "nexus-go-defense.pdf").is_file():
+        pytest.skip("needs the deck kit's generated Beamer deck")
     root = tmp / "generated kit"
     for rel in ("beamer/nexus-go-defense.tex", "beamer/nexus-go-defense.pdf", "beamer/nexus-go-defense.nav",
                 "beamer/slides.tex", "beamer/build/layout.json"):

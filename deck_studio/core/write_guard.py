@@ -3,6 +3,7 @@ import fnmatch
 import ntpath
 import os
 import re
+import sys
 from dataclasses import dataclass, field
 
 from deck_studio.core.shell_policy import local_command
@@ -47,7 +48,9 @@ def _norm(base, p):
     device paths (//?/GLOBALROOT/..., //./pipe/...) stay absolute, hence outside every folder."""
     p = re.sub(r"^[\\/]{2}[?.][\\/](?=[a-z]:[\\/])", "", p, flags=re.I)
     p = re.sub(r"^[\\/]{2}[?.][\\/]UNC[\\/]", r"\\\\", p, flags=re.I)
-    return ntpath.normpath(ntpath.join(base, p))
+    p = ntpath.normpath(ntpath.join(base, p))
+    # a Windows short name (C:\\Users\\RUNNER~1) is the same folder as its long form, which the kit root has
+    return os.path.realpath(p) if sys.platform == "win32" and "~" in p else p
 
 
 def _bad():

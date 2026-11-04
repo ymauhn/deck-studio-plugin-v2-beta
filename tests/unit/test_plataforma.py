@@ -92,3 +92,23 @@ def test_the_data_home_follows_the_system(monkeypatch, tmp_path):
         assert plataforma.data_home() == tmp_path / "deck-studio"
         monkeypatch.delenv("XDG_DATA_HOME")
         assert plataforma.data_home().parts[-3:] == (".local", "share", "deck-studio")
+
+
+def test_the_write_guard_reads_a_windows_short_name_as_its_long_folder(tmp_path):
+    """The CI's %TEMP% comes as C:\\Users\\RUNNER~1\\...: a project there is still the project."""
+    import ctypes
+
+    import pytest
+
+    from deck_studio.core.write_guard import create_guard
+    if not plataforma.WINDOWS:
+        pytest.skip("Windows short names")
+    kit = tmp_path / "Um projeto com nome longo"
+    (kit / "qa").mkdir(parents=True)
+    buf = ctypes.create_unicode_buffer(1024)
+    ctypes.windll.kernel32.GetShortPathNameW(str(kit), buf, 1024)
+    if "~" not in buf.value:
+        pytest.skip("no short names on this volume")
+    guard = create_guard({"kitRoot": str(kit.resolve()), "allowWrite": ["deck/**"], "askWrite": ["qa/*.py"]})
+    assert guard.check("Edit", {"file_path": buf.value + "\\qa\\check_deck.py"}, "deck").behavior == "ask"
+    assert guard.check("Write", {"file_path": buf.value + "\\deck\\x.html"}, "deck").behavior == "allow"
