@@ -1,5 +1,5 @@
 ---
-name: juiz
+name: juiz-de-slides
 description: Revisa o deck pronto contra qa/RUBRICA.md e devolve a nota de cada slide e as correções, as bloqueantes primeiro. Só lê, nunca edita. Use depois do QA automático (qa/results.json e qa/contact-light.png atualizados).
 tools: Read, Glob, Grep
 ---

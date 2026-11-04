@@ -139,7 +139,8 @@ def generic_config(kit, fmt="html"):
         "readDirs": [user_skills],
         # the chosen format's outputs (the other format's folder is the template, untouched): the HTML deck's PDF, or
         # the Beamer deck's Overleaf zip, whose PDF the Beamer view opens (Abrir PDF)
-        "jobs": ({"overleaf": [[py, "-I", "-u", "tools/overleaf_zip.py"]]} if beamer else
+        # (a Beamer deck goes to Overleaf by the Beamer bar's Exportar para o Overleaf, features/beamer.py)
+        "jobs": ({} if beamer else
                  {"export-pdf": [clean_build, [py, "-I", "-u", "deck/tools/export_pdf.py"]]}),
         "jobOutputs": {"export-pdf": "deck/dist/deck.pdf"},
         "publishSite": None,

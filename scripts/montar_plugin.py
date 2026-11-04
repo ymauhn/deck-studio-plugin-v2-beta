@@ -52,7 +52,7 @@ def plan():
             if f.suffix == ".md":
                 data = adapt(data.decode("utf-8")).encode("utf-8")
             out[rel] = data
-    agent = adapt(AGENT.read_text(encoding="utf-8")).replace("name: juiz-de-slides", "name: juiz", 1)
+    agent = adapt(AGENT.read_bytes().decode("utf-8"))  # bytes: the line endings stay as in the checkout.replace("name: juiz-de-slides", "name: juiz", 1)
     out[Path("agents", "juiz.md")] = agent.encode("utf-8")
     for m in MODULES:
         src = SRC / m

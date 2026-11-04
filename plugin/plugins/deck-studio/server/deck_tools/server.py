@@ -13,7 +13,7 @@ from pathlib import Path
 from mcp.server.mcpserver import Image, MCPServer
 
 from deck_studio import projects
-from deck_studio.beamer import engine
+from deck_studio.beamer import engine, overleaf
 from deck_studio.config import load_config, run_command
 from deck_studio.core import plataforma
 from deck_studio.features import beamer
@@ -226,6 +226,17 @@ async def exportar(projeto: str = "") -> str:
     """Exporta o formato do projeto: o PDF do deck HTML (deck/dist/deck.pdf) ou o zip do Overleaf do Beamer."""
     async def job():
         st = state_of(projeto)
+        if st.config.get("format") == "beamer":  # the Overleaf zip, checked by compiling a copy alone
+            deck = beamer.deck_for(st, None)
+            r = await deck.full()
+            view = deck.current()
+            if not r["ok"] or not view:
+                return "Erro: o Beamer não compila agora: chame compile_beamer e corrija os erros."
+            zip_path, names = await asyncio.to_thread(overleaf.build, deck.main, view["pdf"], st.kit_root / "exports",
+                                                      deck.work)
+            c = await asyncio.to_thread(overleaf.check, zip_path, deck.main.name)
+            return (f"Zip do Overleaf: {zip_path} ({len(names)} arquivos). " +
+                    ("Uma cópia compilou sozinha, sem nenhum [?]." if c["ok"] else f"A cópia sozinha falhou: {c}"))
         name, commands = next(iter(st.config["jobs"].items()))
         for argv in commands:
             code, out, _ = await run_command(st.config, argv)
