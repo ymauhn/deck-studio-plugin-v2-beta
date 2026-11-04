@@ -161,6 +161,8 @@ def replace_text(html, line, col, child_index, old_text, new_text):
     if path and any(map(_generated, path)):
         return _fail("not-editable", "Conteúdo gerado (fórmula, tabela ou componente) não se edita aqui. Peça a mudança no chat.")
     kids = path[-1].children if path else []
+    if path and child_index == len(kids) and old_text == "":  # a new last text node: End after an inline formula
+        return _append_text(html, path[-1], new_text)
     if not (isinstance(child_index, int) and 0 <= child_index < len(kids)):
         return _fail("not-found", f"Não achei esse trecho no arquivo (linha {line}, coluna {col}). Recarregue e tente de novo.")
     t = kids[child_index]
@@ -177,6 +179,19 @@ def replace_text(html, line, col, child_index, old_text, new_text):
     text = new_text.strip().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     text = re.sub(r"\r\n|\r|\n", eol, text)
     return EditResult(ok=True, html=html[:t.start] + lead + text + trail + html[t.end:])
+
+
+def _append_text(html, el, new_text):
+    """Text after the element's last child, just before its end tag: a box that ends with an inline formula (<i>,
+    <sub>...) has no text node there for the author to type into. A leading space of new_text is kept."""
+    m = re.search(rf"</\s*{re.escape(el.tag)}\s*>$", html[el.start:el.end], re.I)
+    if not m or not new_text.strip():
+        return _fail("not-text", "Aqui não há texto simples para editar. Peça a mudança no chat.")
+    at = el.start + m.start()
+    eol = m.group() if (m := re.search(r"\r?\n", html)) else "\n"
+    text = new_text.strip().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    text = (" " if new_text[:1].isspace() else "") + re.sub(r"\r\n|\r|\n", eol, text)
+    return EditResult(ok=True, html=html[:at] + text + html[at:])
 
 
 def set_attribute(html, line, col, name, value):

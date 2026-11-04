@@ -59,14 +59,26 @@ addEventListener('dblclick', (e) => {
   else edit(t);
 }, true);
 
-function edit(node) {
+// End in a box whose text goes on after the edited node (an inline formula, <i>, <sub>...): the editor moves to the
+// box's end, as the author expects (04/11). The last text node of the box when there is one, else a new one after the
+// formula, which the server appends before the end tag (childIndex = the number of children, oldText "").
+function editBoxEnd(box) {
+  const last = box.lastChild;
+  if (last?.nodeType === Node.TEXT_NODE) return edit(last, { end: true });
+  const fresh = document.createTextNode('');
+  box.append(fresh);
+  edit(fresh, { end: true });
+}
+
+function edit(node, { end = false } = {}) {
   const box = node.parentElement;
   const [, file, line, col] = /^(.*):(\d+):(\d+)$/.exec(box.dataset.loc);
   const childIndex = [...box.childNodes].indexOf(node);
   const old = node.data;
   const sel = getSelection(); // the word the double click selected stays selected in the editor
   const r = sel.rangeCount ? sel.getRangeAt(0) : null;
-  const [from, to] = r?.startContainer === node && r.endContainer === node ? [r.startOffset, r.endOffset] : [0, 0];
+  const [from, to] = end ? [node.length, node.length]
+    : r?.startContainer === node && r.endContainer === node ? [r.startOffset, r.endOffset] : [0, 0];
   const span = Object.assign(document.createElement('span'), { className: 'studio-editing', contentEditable: 'plaintext-only' });
   span.dataset.interactive = ''; // the deck leaves clicks inside it alone
   span.setAttribute('role', 'textbox');
@@ -102,6 +114,15 @@ function edit(node) {
   span.addEventListener('keydown', (e) => {
     e.stopPropagation(); // arrows, space and letters edit the text, not the deck
     if (e.key === 'Escape' && open) open.cancel();
+    // End with nothing typed yet, in a box that goes on after this text: edit at the box's end instead
+    const rest = [...box.childNodes].slice([...box.childNodes].indexOf(span) + 1)
+      .filter((n) => n.nodeType !== Node.TEXT_NODE || n.data.trim());
+    if (e.key === 'End' && !e.shiftKey && open && rest.length && span.textContent === old) {
+      e.preventDefault();
+      open.cancel();
+      editBoxEnd(box);
+      return;
+    }
     if (e.key === 'Enter' && !e.isComposing && open) {
       e.preventDefault();
       save();
