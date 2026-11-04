@@ -19,7 +19,7 @@ from claude_agent_sdk import (AssistantMessage, RateLimitEvent, ResultMessage, S
 from deck_studio.agent.prompt import user_content
 from deck_studio.agent.sdk import SHELL_TOOLS, make_client
 from deck_studio.core.write_guard import DEFAULT_LEVEL, WRITE_TOOLS
-from deck_studio.features import approvals
+from deck_studio.features import approvals, language
 from deck_studio.render import Renderer
 
 IMAGES = 4  # ponytail: images of a selection's first 4 slides; the agent takes screenshots of the others itself
@@ -117,7 +117,8 @@ class ChatSession:
             if self._client_model != self.model:
                 await self.client.set_model(self.model)
                 self._client_model = self.model
-            await self.client.query(self._message(text, selection, await self._images(selection)))
+            await self.client.query(self._message(text + language.note(self.state), selection,
+                                                  await self._images(selection)))
             result = None
             async for m in self.client.receive_response():
                 result = await self._handle(turn_id, m)

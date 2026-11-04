@@ -2,7 +2,7 @@
 
 Each user message picks <scenarios>/<name>.json with the marker #scenario:<name>; without one the fake says "ok".
 A scenario is {"init"?: {...}, "steps": [...]}. Steps:
-- {"say": text}: text deltas and the assistant message; {{model}}, {{effort}}, {{session}} (the session id: options.resume when
+- {"say": text}: text deltas and the assistant message; {{model}}, {{effort}}, {{message}} (the user message's text), {{session}} (the session id: options.resume when
   resuming), {{selection}}, {{selection_raw}}, {{images}} (the message's images with their captions), {{result}}
   (the text of the last tool result), {{context}} (what that call's PostToolUse hooks added) and {{appendix}} (what
   the system prompt adds to the Claude Code preset) are filled in;
@@ -136,7 +136,7 @@ class FakeClient:
             "cwd": str(self.options.cwd), "tools": [], "mcp_servers": [], "model": self.model,
             "permissionMode": self.options.permission_mode or "default", "slash_commands": [], "output_style": "default",
             "skills": list(self.options.skills or []), "plugins": [], **self._meta()})
-        values = {"model": lambda: str(self.model), "effort": lambda: str(self.options.effort or "padrão"), "session": lambda: self.session_id,
+        values = {"model": lambda: str(self.model), "effort": lambda: str(self.options.effort or "padrão"), "message": lambda: text, "session": lambda: self.session_id,
                   "selection": lambda: selection_of(text),
                   "selection_raw": lambda: raw_selection(text), "images": lambda: images_of(content),
                   "result": lambda: self._result, "context": lambda: self._context,

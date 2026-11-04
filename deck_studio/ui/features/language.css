@@ -1,0 +1,8 @@
+.lang { display: inline-flex; border: 1px solid var(--hair); border-radius: 999px; overflow: hidden; }
+.lang button {
+  font: 600 12px/1 var(--font-data); color: var(--ink2); background: var(--raised); cursor: pointer;
+  border: 0; padding: 8px 10px;
+}
+.lang button + button { border-left: 1px solid var(--hair); }
+.lang button[aria-checked="true"] { background: var(--seq-t); color: var(--seq-ink); }
+.lang button:disabled { cursor: not-allowed; opacity: .5; }
