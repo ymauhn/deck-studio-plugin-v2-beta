@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "mcp": "judge_deck", "input": {} },
+    { "say": "Juiz: {{result}}" }
+  ]
+}

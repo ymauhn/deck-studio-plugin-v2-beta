@@ -20,10 +20,12 @@ The author watches the deck next to the chat while you build and edit it.
 ## HTML deck (`deck/`)
 
 - **Files.** The slides live in `deck/src/slides/*.html`, built in name order: `00-title.html`, then one file per part of the talk (`01-introducao.html`, ...), each with several slides.
-- **Markup.** Copy each slide from a pattern in `.claude/skills/criar-apresentacao/padroes.html` and use only its classes:
+- **The method.** A whole talk follows the skill `criar-apresentacao`, in phases: a briefing with the author, `docs/FACTS.md` and `docs/FIGURES.md`, `docs/STORYLINE.md` (the author approves it), the slides, then `mcp__deck__run_qa` and `mcp__deck__judge_deck` until they pass. `docs/briefing.json` keeps the author's choices and `docs/DECISIONS.md` yours. Edit `qa/` and `.claude/agents/` only when the author asks: they check your work.
+- **Style.** The rules are in `.claude/skills/criar-apresentacao/ESTILO.md`: the theme's three concept colours (`--c1`, `--c2`, `--c3`, each tied to one concept), one idea per slide, an affirmative title, one item per step, shorten the text rather than the font, the source page at the end of the notes.
+- **Markup.** Copy each slide from the example of its type in `.claude/skills/criar-apresentacao/exemplos/` and use only its classes:
   - `<section class="slide" id="s07" data-part="Part name">`. The id is unique in the deck and never changes; a slide added later takes a new one, such as `s07b`.
   - `<h2 class="title">`, the title; the engine puts `data-part` above it.
-  - `<div class="bd">`, the 12-column grid. Each child takes a column class: `col-w` (12), `col-main` + `col-side` (8 + 4), `col-a` + `col-b` (6 + 6), `col-text` + `col-fig` (5 + 7).
+  - `<div class="bd">`, the 12-column grid. Each child takes a column class: `col-w` (12), `col-main` + `col-side` (8 + 4), `col-a` + `col-b` (5 + 7), `col-text` + `col-fig` (5 + 7).
   - Steps: `class="f"` shows an element on the next click, `data-f="2"` puts it in click 2, and `class="fo"` hides it at its click.
   - `<aside class="notes">`, the speaker notes, with the source page.
   - Slides for questions go after the closing slide, with `class="slide backup"`.

@@ -4,12 +4,15 @@ import base64
 import json
 import os
 import re
+import sys
 import unicodedata
 from pathlib import Path
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
+from deck_studio.agent import judge
 from deck_studio.beamer import engine
+from deck_studio.config import run_command
 from deck_studio.features import beamer
 from deck_studio.render import Renderer
 
@@ -17,6 +20,8 @@ IMAGE_TYPES = {".png": ".png", ".jpg": ".jpg", ".jpeg": ".jpg", ".webp": ".webp"
 SLIDE = {"slide": {"type": "integer", "minimum": 1, "description": "Slide number, 1-based (a selection's slide)"},
          "step": {"type": "integer", "minimum": 0,
                   "description": "Fragment step; leave it out for the last step, with everything shown"}}
+# the project's QA scripts (templates/project/qa), run with the studio's own Python; "all" runs them in this order
+QA = {"check": "qa/check_deck.py", "audit": "qa/audit_numbers.py", "shoot": "qa/shoot.py"}
 DECK = {"path": {"type": "string", "description": "The deck's main .tex, kit-relative; by default the project's "
                                                   "Beamer deck"}}
 
@@ -146,5 +151,42 @@ def deck_server(state, session):
         return {"content": [{"type": "text", "text": f"Page {n} of {view['pages']} of {deck.rel}."},
                             {"type": "image", "data": base64.b64encode(png).decode("ascii"), "mimeType": "image/png"}]}
 
+    @tool("run_qa", "Build the clean deck (deck/dist/deck.html) and run the project's QA scripts on it: check "
+          "(qa/check_deck.py: steps against docs/STORYLINE.md, overflow, overlap, figures of docs/FIGURES.md, keys, "
+          "contrast, reduced motion, charts, size, offline fonts, notes with the source page, text rules), audit "
+          "(qa/audit_numbers.py: every number on the slides is in the source or docs/FACTS.md) and shoot (qa/shoot.py: "
+          "the contact sheet qa/contact-light.png). Answers with their output; fix every FAIL and UNMATCHED.",
+          {"type": "object", "properties": {"which": {"type": "string", "enum": ["all", *QA],
+                                                      "description": "One script, or all (the default)"}}})
+    async def run_qa(args):
+        which = args.get("which") or "all"
+        names = list(QA) if which == "all" else [which]
+        missing = [QA[n] for n in names if not (state.kit_root / QA[n]).is_file()]
+        if missing:
+            return _text(f"This project has no {', '.join(missing)}.", error=True)
+        async with state.builder.lock:  # the clean build writes deck/build too, as the studio builds do
+            code, out, _ = await run_command(state.config, state.config["cleanBuild"])
+        if code != 0:
+            return _text(f"The clean build failed:\n{out[-3000:]}", error=True)
+        parts, failed = [], False
+        for n in names:
+            code, out, ms = await run_command(state.config, [sys.executable, "-I", "-X", "utf8", QA[n]])
+            failed |= code != 0
+            parts.append(f"## {QA[n]} (exit {code}, {ms} ms)\n{out.strip()[-4000:]}")
+        return _text("\n\n".join(parts), error=failed)
+
+    @tool("judge_deck", "Ask the judge: a separate Claude session that can only read this project reviews the deck "
+          "against qa/RUBRICA.md (run run_qa first, so it sees the latest checks and contact sheet) and answers with a "
+          "score per slide and the fixes, BLOQUEANTE ones first. Its report is saved in qa/JUIZ.md. It takes a few "
+          "minutes. Fix every BLOQUEANTE item, then ask again.",
+          {"type": "object", "properties": {"focus": {"type": "string",
+                                                      "description": "Optional: what to look at most closely"}}})
+    async def judge_deck(args):
+        try:
+            report = await judge.judge(state, args.get("focus") or "")
+        except ValueError as e:
+            return _text(str(e), error=True)
+        return _text(report)
+
     return create_sdk_mcp_server("deck", tools=[get_selection, rebuild_deck, screenshot_slide, check_slide, add_image,
-                                                compile_beamer, screenshot_beamer_page])
+                                                compile_beamer, screenshot_beamer_page, run_qa, judge_deck])

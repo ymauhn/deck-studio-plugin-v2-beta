@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "mcp": "run_qa", "input": { "which": "audit" } },
+    { "say": "QA: {{result}}" }
+  ]
+}
