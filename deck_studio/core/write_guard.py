@@ -5,20 +5,14 @@ import os
 import re
 from dataclasses import dataclass, field
 
+from deck_studio.core.shell_policy import local_command
+
 # the tools that write a file, with the input key that names it
 WRITE_TOOLS = {"Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path", "NotebookEdit": "notebook_path"}
 SHELL_TOOLS = ("Bash", "PowerShell")
 # the autonomy levels of the chat switch: perguntar sempre, editar o deck sem perguntar (the default), autônomo
 LEVELS = ("ask", "deck", "auto")
 DEFAULT_LEVEL = "deck"
-# a shell command that may act outside the machine, or reach a file the studio runs or protects, asks at every level.
-# ponytail: a lexical check, not a sandbox; an obfuscated command can slip by, so "auto" is the author's own risk
-EXTERNAL = re.compile(
-    r"publish|netlify|deploy|vercel|\bgit\s+(push|remote)|\bgh\b|\bnpx?\s+(publish|login)|curl|wget|"
-    r"invoke-(webrequest|restmethod)|\b(iwr|irm)\b|\bssh\b|\bscp\b|\bs?ftp\b|https?://|"
-    r"\.(js|mjs|cjs)\b|shell\.html|latexmkrc|claude\.md|\.claude|"
-    r"\.\.|~|\$env:|\$home|%[a-z_]+%|\\\\|(^|[\s\"'=])/[a-z]/", re.I)
-DRIVE_PATH = re.compile(r"[a-z]:[\\/]", re.I)
 
 
 @dataclass
@@ -70,6 +64,7 @@ class Guard:
         self.ask_write = c.get("askwrite", [])
         self.ask_dirs = [_norm(os.getcwd(), d) for d in c.get("askwritedirs", [])]
         self.readable = [self.root, *(_norm(os.getcwd(), d) for d in c.get("readdirs", []))]
+        self.local_scripts = c.get("localscripts", [])  # the deck's own scripts, which Autônomo runs
 
     def check(self, tool_name, tool_input, level=None):
         """The decision on one tool call. `level` is the chat's autonomy level (LEVELS; any other value is the
@@ -84,25 +79,14 @@ class Guard:
             return Decision("ask", "Modo perguntar sempre: toda escrita precisa da sua aprovação.", d.paths)
         if level != "auto" or d.behavior != "ask":
             return d
-        if tool_name in ("Read", "Grep", "Glob", "WebFetch", "WebSearch"):
-            return Decision("allow", "Modo autônomo: leitura e consulta liberadas.", d.paths)
-        if tool_name in SHELL_TOOLS and self._local(tool_input.get("command")):
-            return Decision("allow", "Modo autônomo: comando local no deck.")
+        if tool_name in ("Read", "Grep", "Glob"):  # reading only; the web asks at every level (it goes out)
+            return Decision("allow", "Modo autônomo: leitura liberada.", d.paths)
+        if tool_name in SHELL_TOOLS:
+            ok, why = local_command(tool_input.get("command"), self.root, self.local_scripts)
+            if ok:
+                return Decision("allow", "Modo autônomo: comando local do deck.")
+            return Decision("ask", f"Comando de terminal ({why}): precisa da sua aprovação.")
         return d
-
-    def _local(self, command):
-        """True for a shell command that names no external action, no protected file and no path outside the kit."""
-        if not isinstance(command, str) or not command.strip() or EXTERNAL.search(command):
-            return False
-        # every absolute path in it, quoted (with spaces) or not, must be inside the kit
-        quoted = re.findall(r"\"([^\"]*)\"|'([^']*)'", command)
-        bare = re.sub(r"\"[^\"]*\"|'[^']*'", " ", command)
-        tokens = [a or b for a, b in quoted] + bare.split()
-        for token in tokens:
-            m = DRIVE_PATH.search(token)
-            if m and _inside(self.root, _norm(self.root, token[m.start():].strip("<>|;,()"))) is None:
-                return False
-        return True
 
     def _check(self, tool_name, tool_input, level):
         if tool_name in WRITE_TOOLS:

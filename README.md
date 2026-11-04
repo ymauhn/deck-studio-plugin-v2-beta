@@ -23,13 +23,16 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **Comentar (C):** deixa uma nota numa caixa. As notas se juntam num lote, e você manda o lote para o chat de uma vez.
 - **Mover (M):** arrasta e redimensiona a caixa selecionada no grid de 12 colunas.
 - **Origem:** passe o mouse sobre um número para ver a linha da dissertação de onde ele vem.
+- **Seguir o agente** (ligado por padrão): enquanto o agente edita, o deck vai sozinho para o slide de cada escrita, no último passo, e a caixa alterada pisca. O botão desliga e liga, e a escolha fica. Se você navegar à mão durante um pedido, ele pausa até o próximo pedido.
 - **HTML | Beamer:** troca para a versão Beamer.
   - Na versão acadêmica (`beamer/academico`), um clique num frame mostra a fonte LaTeX dele.
   - Para salvar a fonte, use Ctrl+S: o frame recompila.
+  - A compilação usa o `latexmk`, que precisa do Perl. O app procura um no PATH, no Git for Windows e no Strawberry Perl. Sem nenhum, compila com `pdflatex`, `bibtex` ou `biber` e o `pdflatex` mais duas vezes, e um erro diz o que instalar.
 - **Idioma (EN | PT):** alterna o deck entre a versão em inglês e a em português.
-  - **Traduzir para …** pede ao agente, no chat, a cópia no outro idioma, em `deck/src/i18n/<idioma>/`. É um pedido como os outros, com **Ver diff** e **Desfazer**.
-  - A versão na tela é a que o build, **Exportar PDF** e **Publicar** usam. Cada idioma guarda uma cópia em `deck/src/i18n/<idioma>/`.
-  - Não dá para trocar o idioma durante um pedido. O **Desfazer** de um pedido antigo só funciona com o deck de volta no idioma daquele pedido.
+  - **No deck da defesa,** o português é a árvore `deck/src-pt` do kit (`node deck/build.mjs --pt`). Com **PT**, o app mostra, seleciona e edita os arquivos de `deck/src-pt`, e **Arquivos** lista `deck/src-pt/slides`. **Exportar PDF** grava `deck/dist/nexus-go-defesa-pt.pdf`, e **Publicar** atualiza as duas versões do site.
+  - **Num deck sem a versão em português,** **Traduzir para …** pede ao agente, no chat, a cópia em `deck/src/i18n/<idioma>/`. É um pedido como os outros, com **Ver diff** e **Desfazer**, e a chave passa a trocar entre as cópias.
+  - A versão na tela é a que o build, **Exportar PDF** e **Publicar** usam, e a escolha continua depois de fechar o app.
+  - Não dá para trocar o idioma durante um pedido.
 
 ### Chat
 
@@ -44,8 +47,11 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **Autonomia:** a chave acima da caixa de mensagem vale para todos os chats, a partir da próxima ação do agente.
   - **Perguntar sempre:** toda escrita, comando e acesso à web espera o seu **Permitir**.
   - **Editar o deck** (o padrão): edita os arquivos do deck sem perguntar. Comandos, web e os scripts do deck pedem aprovação.
-  - **Autônomo:** também roda comandos locais, lê fora do deck e consulta a web sem perguntar.
-  - **Em qualquer nível:** a escrita fora do deck continua barrada, a dissertação e os arquivos gerados continuam protegidos, e os scripts do deck pedem aprovação. Um comando que publica, usa a rede ou sai da pasta do deck também pede.
+  - **Autônomo:** também lê fora do deck e roda, sem perguntar, os comandos do próprio deck e os de leitura.
+    - Do deck: o build (`node deck/build.mjs`, com ou sem `--pt`), o QA (`qa/*.py`), o `export_pdf.py`, o build do Beamer e o TeX (`pdflatex`, `bibtex`, `latexmk -norc`).
+    - De leitura: `ls`, `cat`, `grep`, `diff`, `sed -n` e afins.
+    - Ainda pedem: um comando que grava num arquivo (`>`, heredoc, `cp`, `mv`, `python -c`), um script que não é do deck e qualquer comando fora dessas listas.
+  - **Em qualquer nível:** a escrita fora do deck continua barrada; a dissertação e os arquivos gerados continuam protegidos; e o código que o studio roda (os `.js` do deck, o build, as ferramentas, os scripts de QA, as configurações do Claude) pede aprovação. Publicar, a rede (incluindo a busca na web) e o `git push` também pedem.
 - **Aprovações:** o que o nível de autonomia não libera espera o seu **Permitir** ou **Negar**. O cartão mostra o pedido inteiro, com todas as linhas.
 - **Erros:** se o agente parar no meio de um pedido, o chat diz o que houve e o que fazer, em geral mandar a mensagem de novo. O texto técnico fica dobrado em **Detalhe técnico**, e uma ferramenta que ficou sem resposta aparece em cinza, com "sem resultado".
 
@@ -61,10 +67,11 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **Regenerar Beamer:** gera de novo a versão Beamer a partir do deck.
 - Nenhuma tarefa roda enquanto o agente está mudando o deck.
 
-## Criar uma apresentação a partir de um PDF
+## Criar uma apresentação a partir de um PDF ou de uma pasta
 
 1. Clique em **Projetos**, na barra de cima.
-2. Em **Nova apresentação a partir de um PDF**, solte o PDF na caixa ou clique nela para escolher. Vale um artigo, uma dissertação ou um relatório, de até 100 MB.
+2. Em **Nova apresentação a partir de um PDF ou de uma pasta**, solte o PDF na caixa ou clique nela para escolher. Vale um artigo, uma dissertação ou um relatório, de até 100 MB.
+   - **Ou escolha uma pasta** (ou solte vários arquivos de uma vez): PDFs, notas `.md`/`.txt`, `.tex`/`.bib`, `.csv` e imagens, até 100 MB juntos. Tudo vai para `context/`, e cada PDF é extraído numa pasta própria. O nome do projeto vem do nome da pasta, e o que não serve (um `.exe`, por exemplo) fica de fora, com aviso ao agente.
 3. Confira os campos:
    - **Nome:** vem do nome do arquivo e vira o título do projeto.
    - **Formato:** **HTML (deck web)** ou **Beamer (LaTeX)**.
@@ -77,6 +84,7 @@ Depois:
 
 - **Editar:** como no deck da defesa, com seleção, chat, edição no lugar e **Desfazer**.
 - **HTML:** **Exportar PDF** grava `deck/dist/deck.pdf`, na pasta do projeto.
+- **Publicar um projeto:** **Cadastrar link de publicação** liga o projeto a um site do Netlify, um que já existe na sua conta ou um novo com o nome que você der. O login é o da Netlify CLI desta máquina (`npx netlify login`). Depois, **Publicar** aparece na barra, com a mesma confirmação do deck da defesa, e o site sai com noindex. O link fica em `deck/tools/netlify-site.json`.
 - **Beamer:** o projeto abre na versão Beamer, com a pasta `beamer/apresentacao` aberta em **Arquivos**, e recompila a cada mudança no `.tex`. **Abrir PDF** mostra o PDF da última compilação, e **Exportar para Overleaf** grava um `.zip` em `exports/` e mostra o caminho completo dele no registro da tarefa.
 - **Autor, instituição e evento:** o que nem o PDF nem as suas instruções dizem fica marcado nos slides, como `[autor]`, `[instituição]` e `[evento e data]`, para você preencher. O agente avisa no resumo.
 - **Voltar a um projeto:** **Projetos**, depois **Abrir**. Cada projeto roda num studio próprio, na sua aba, e fecha junto com o Deck Studio. **Remover** só tira o projeto da lista; nada sai do disco.

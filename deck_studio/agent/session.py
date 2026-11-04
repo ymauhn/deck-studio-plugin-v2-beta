@@ -297,6 +297,30 @@ class ChatSession:
             self.state.history.before_write(self.turn_id, path)
         return behavior, reason
 
+    async def _announce_edit(self, path, tool, tool_input):
+        """An `agent-edit` event {file, line}: the kit-relative slide file and the first line this write changed (the
+        new text of an Edit, else the first line that differs from the file at the start of the turn)."""
+        slides = (self.state.kit_root / self.state.config["slidesDir"]).resolve()
+        p = Path(path).resolve()
+        if p.parent != slides or p.suffix.lower() != ".html":
+            return
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            return
+        line = 1
+        edits = tool_input.get("edits") if tool == "MultiEdit" else [tool_input]
+        new = next((e.get("new_string") for e in edits or [] if isinstance(e, dict) and e.get("new_string")), None)
+        if isinstance(new, str) and new.strip() and new in text:
+            line = text[:text.index(new)].count("\n") + 1
+        else:
+            before = self.state.history.before_text(self.turn_id, p)
+            if before is not None:
+                old, cur = before.split("\n"), text.split("\n")
+                line = next((i + 1 for i, (a, b) in enumerate(zip(old, cur)) if a != b), min(len(old), len(cur)) + 1)
+        rel = p.relative_to(self.state.kit_root.resolve()).as_posix()
+        await self.state.events.publish("agent-edit", file=rel, line=line, turnId=self.turn_id)
+
     async def post_tool_use(self, data, tool_use_id, context):
         """After a write in the deck sources, or a shell command (which may have changed them): rebuild (the deck
         reloads when the build is good); a failed build goes back to the agent, so it fixes it in the same request."""
@@ -306,6 +330,8 @@ class ChatSession:
             data["tool_name"], data.get("tool_input") or {})
         if not (path and Path(path).is_relative_to(sources)):
             return {}
+        if data["tool_name"] not in SHELL_TOOLS:  # "seguir o agente": the UI goes to the box this write changed
+            await self._announce_edit(path, data["tool_name"], data.get("tool_input") or {})
         build = await self.state.builder.sources_changed([path])
         if build["ok"]:
             return {}

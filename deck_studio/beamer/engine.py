@@ -3,6 +3,7 @@ import gzip
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 import unicodedata
@@ -19,13 +20,42 @@ TIMEOUT = 300
 # agent writes the .tex with no approval, and a page holding another file of this computer would reach the agent's
 # screenshots and the author's PDF. ponytail: MiKTeX does not apply it to \openin + \read; only a sandbox closes that
 SAFE_INPUTS = {"MIKTEX_CORE_ALLOWUNSAFEINPUTFILES": "false"}
+# MiKTeX's latexmk is a Perl script: without a perl on PATH it stops with "could not find the script engine 'perl'"
+# (2026-11-04: the studio, opened from Explorer, does not have Git's usr/bin on its PATH). Where to look besides PATH:
+# (not C:\Strawberry: any user may create a folder at the root of C:, and the studio would run that perl.exe)
+PERL_PLACES = [r"%ProgramFiles%\Git\usr\bin", r"%ProgramFiles(x86)%\Git\usr\bin", r"%LOCALAPPDATA%\Programs\Git\usr\bin",
+               r"%ProgramFiles%\Strawberry\perl\bin"]
+NO_PERL = ("O latexmk precisa do Perl, e nenhum foi achado (nem no PATH, nem no Git for Windows, nem no Strawberry "
+           "Perl): o studio compilou com o pdflatex e o bibtex direto. Para usar o latexmk, instale o Git for Windows "
+           "(git-scm.com) ou o Strawberry Perl (strawberryperl.com) e abra o Deck Studio de novo.")
 
 
-def run(argv, cwd):
+def find_perl(path=None, places=PERL_PLACES):
+    """The folder of a perl.exe: on PATH first, then in Git for Windows' or Strawberry Perl's usual folders."""
+    found = shutil.which("perl", path=path if path is not None else os.environ.get("PATH", ""))
+    if found:
+        return str(Path(found).parent)
+    for place in places:
+        folder = Path(os.path.expandvars(place))
+        if "%" not in str(folder) and (folder / "perl.exe").is_file():
+            return str(folder)
+    return None
+
+
+def tex_env(perl=None):
+    """The TeX tools' environment: safe inputs, and perl's folder at the end of PATH, for them only (at the end,
+    nothing in that folder shadows a TeX tool)."""
+    env = {**os.environ, **SAFE_INPUTS}
+    if perl:
+        env["PATH"] = env.get("PATH", "") + os.pathsep + perl
+    return env
+
+
+def run(argv, cwd, env=None):
     """Run a TeX tool; on timeout stop its whole process tree (latexmk starts perl and the engine)."""
     p = subprocess.Popen(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                          encoding="utf-8", errors="replace", creationflags=subprocess.CREATE_NO_WINDOW,
-                         env={**os.environ, **SAFE_INPUTS})
+                         env=env or tex_env())
     try:
         out = p.communicate(timeout=TIMEOUT)[0]
     except subprocess.TimeoutExpired:
@@ -61,8 +91,59 @@ def frames(tex_text):
     return out
 
 
-def compile(project, work_dir, frame=None):
+def _bib_tool(text):
+    """biber for biblatex, bibtex for \\bibliography{...}, None without a bibliography."""
+    code = "\n".join(line.split("%")[0] for line in text.split("\n"))
+    if re.search(r"\\usepackage(\[[^\]]*\])?\{biblatex\}|\\addbibresource", code):
+        return "biber"
+    return "bibtex" if re.search(r"\\bibliography\{", code) else None
+
+
+def _bib_after_first_pass(work, stem):
+    """The bibliography tool the first pass asks for, from its own files: biber when it wrote <stem>.bcf (biblatex),
+    bibtex when the .aux has a \\bibdata (also from a \\bibliography inside an \\input file), else None."""
+    if (work / f"{stem}.bcf").exists():
+        return "biber"
+    try:
+        aux = (work / f"{stem}.aux").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return "bibtex" if "\\bibdata{" in aux else None
+
+
+def _without_latexmk(tex, text, src, work, cwd, env):
+    """What latexmk does for a deck, without Perl: the engine, the bibliography tool, then the engine twice (the
+    citations, then the references and the page numbers settle). Returns (exit code of the last run, output, the
+    bibliography tool's error or None): bibtex and biber exit with 2 or more on an error (1 is warnings only)."""
+    engine = [tex, "-synctex=1", "-interaction=nonstopmode", "-file-line-error", "-no-shell-escape",
+              "-max-print-line=10000", f"-output-directory={work}", str(src)]
+    code, out = run(engine, cwd, env)
+    outs, bib_error = [out], None
+    tool = _bib_after_first_pass(work, src.stem) or _bib_tool(text)
+    if tool and (work / f"{src.stem}.aux").exists():
+        argv = (["biber", f"--input-directory={cwd}", f"--output-directory={work}", src.stem] if tool == "biber"
+                else ["bibtex", src.stem])
+        bib_code, bib_out = run(argv, cwd if tool == "biber" else work, env)
+        outs.append(bib_out)
+        try:
+            blg = (work / f"{src.stem}.blg").read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            blg = ""
+        # TeX Live's bibtex exits with 2 on an error, MiKTeX's with 1 (and 0 on warnings): the .blg says which
+        if bib_code is None or bib_code >= 2 or re.search(r"\(There (?:was|were) \d+ error messages?\)|^ERROR - ",
+                                                          blg, re.M):
+            bib_error = (f"O {tool} falhou (código {bib_code}): as citações ficam [?]. "
+                         + " ".join(bib_out.strip().splitlines()[-3:]))
+    for _ in range(2):
+        code, out = run(engine, cwd, env)
+        outs.append(out)
+    return code, "\n".join(outs), bib_error
+
+
+def compile(project, work_dir, frame=None, perl=...):
     """latexmk with SyncTeX into work_dir, run from the project folder so relative inputs resolve.
+    `perl`, the folder of the perl.exe latexmk runs on, is found by default (find_perl); with none, the deck is
+    compiled without latexmk, and its errors say how to get one.
     frame=i (0-based index into frames(main)) compiles the preamble plus that frame alone, with the
     frame kept on its own line numbers, so errors and clicks map back to the main file unchanged."""
     main = Path(project["main"])
@@ -82,9 +163,20 @@ def compile(project, work_dir, frame=None):
     # the agent writes in the project folder with no approval, so nothing there may run: no latexmkrc (Perl)
     # and no \write18. ponytail: -max-print-line (no log wrapping, so errors parse) is a MiKTeX switch; TeX Live
     # reads it from texmf.cnf
-    code, out = run(["latexmk", "-norc", ENGINES[tex], "-synctex=1", "-interaction=nonstopmode", "-file-line-error",
-                     "-latexoption=-no-shell-escape", "-latexoption=-max-print-line=10000", f"-outdir={work}", str(src)],
-                    main.parent)
+    perl = find_perl() if perl is ... else perl
+    # bibtex runs in work_dir, where the .aux is: the .bib and .bst next to the deck are found through these (latexmk
+    # on Git's MSYS perl did not pass the folder on: the citations came out as [?])
+    # the deck's folder first, then what the author set, then the TeX defaults (the empty entry)
+    env = tex_env(perl)
+    for var in ("BIBINPUTS", "BSTINPUTS"):
+        env[var] = os.pathsep.join([str(main.parent), os.environ.get(var, ""), ""])
+    bib_error = None
+    if perl:
+        code, out = run(["latexmk", "-norc", ENGINES[tex], "-synctex=1", "-interaction=nonstopmode", "-file-line-error",
+                         "-latexoption=-no-shell-escape", "-latexoption=-max-print-line=10000", f"-outdir={work}",
+                         str(src)], main.parent, env)
+    else:
+        code, out, bib_error = _without_latexmk(tex, src.read_text(encoding="utf-8"), src, work, main.parent, env)
     pdf = work / f"{src.stem}.pdf"
     syn = work / f"{src.stem}.synctex.gz"
     if src != main and syn.exists():   # point SyncTeX at the main file, so locate() answers with it
@@ -102,7 +194,12 @@ def compile(project, work_dir, frame=None):
             e["file"] = os.path.normpath(main)
     if code and not errors:
         errors = [{"file": None, "line": None, "message": out.strip()[-500:]}]
-    return {"ok": code == 0, "pdf": str(pdf) if pdf.exists() else None, "errors": errors, "engine": tex,
+    if bib_error:  # the PDF exists, but its citations are [?]: not a good compile
+        errors.append({"file": None, "line": None, "message": bib_error})
+    ok = code == 0 and not bib_error
+    if not ok and (not perl or "script engine 'perl'" in out):  # what to do, before the TeX details
+        errors.insert(0, {"file": None, "line": None, "message": NO_PERL})
+    return {"ok": ok, "pdf": str(pdf) if pdf.exists() else None, "errors": errors, "engine": tex,
             "ms": round((time.perf_counter() - t) * 1000)}
 
 

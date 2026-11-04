@@ -37,6 +37,9 @@ FORMATS = {"html": "HTML", "beamer": "Beamer"}  # and their names in the first r
 LANGUAGES = {"pt": ("pt-BR", "Português (Brasil)", "português"), "en": ("en", "English", "inglês")}
 # the first request, sent in the new project's studio; config["importMessage"] replaces it. Its fields: pdf, format
 # (html | beamer), format_name (HTML | Beamer), language, text, figures
+# the first request of a project made from a folder or several files: {files} is a list, one line per file
+FOLDER_MESSAGE = ("Crie a apresentação a partir dos materiais em `context/`, no formato {format_name}, com os slides em "
+                  "{language}. Os arquivos:\n{files}\nSiga a skill criar-apresentacao e o CLAUDE.md do projeto.")
 MESSAGE = ("Crie a apresentação a partir do PDF `{pdf}`, no formato {format_name}, com os slides em {language}. O "
            "texto extraído está em `{text}` e as figuras em `{figures}`. Siga a skill criar-apresentacao e o CLAUDE.md "
            "do projeto.")
@@ -155,14 +158,23 @@ def entry(name, slug, folder, fmt, language):
 def create(folder, name, slug, fmt, language, pdf_name, pdf):
     """The template filled into `folder` (absent or empty), its studio.json, and the PDF as context/<pdf_name>.
     Raises FileExistsError, before writing anything, when the folder has files."""
+    create_from_files(folder, name, slug, fmt, language, {pdf_name: pdf}, pdf_name)
+
+
+def create_from_files(folder, name, slug, fmt, language, files, main):
+    """The template filled into `folder` (absent or empty), its studio.json, and `files` ({context-relative path:
+    bytes}) under context/; `main` is the file the template names as the source (a PDF, or "" for the folder)."""
     lang, language_name, _ = LANGUAGES[language]
-    fill_template(folder, {"TITLE": name, "LANG": lang, "LANGUAGE": language_name, "PDF": f"context/{pdf_name}",
-                           "SLUG": slug})
+    fill_template(folder, {"TITLE": name, "LANG": lang, "LANGUAGE": language_name,
+                           "PDF": f"context/{main}" if main else "context/", "SLUG": slug})
     studio = {"title": name, "format": fmt, "language": language, "startMode": "beamer" if fmt == "beamer" else "html",
               "beamerStart": BEAMER_START}
     (folder / "studio.json").write_text(json.dumps(studio, ensure_ascii=False, indent=1), encoding="utf-8")
     (folder / "context").mkdir(exist_ok=True)
-    (folder / "context" / pdf_name).write_bytes(pdf)
+    for rel, data in files.items():
+        target = folder / "context" / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
 
 
 def stop_tree(pid):

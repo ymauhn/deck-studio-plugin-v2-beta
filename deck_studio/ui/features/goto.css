@@ -1,0 +1,8 @@
+.goto { display: flex; align-items: center; gap: 8px; font: 400 12px/1 var(--font-body); color: var(--ink2); }
+.goto label { font-weight: 600; }
+.goto input {
+  width: 6ch; font: 500 13px/1 var(--font-data); color: var(--ink); background: var(--raised);
+  border: 1px solid var(--hair); border-radius: 6px; padding: 5px 8px;
+}
+.goto-total { font: 400 12px/1 var(--font-data); white-space: nowrap; }
+body[data-mode="beamer"] .goto { display: none; }

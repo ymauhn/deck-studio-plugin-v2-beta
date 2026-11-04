@@ -52,7 +52,10 @@ def status(request: Request):
     """The studio's state, and the project it edits (the UI reads it once, as studio.project)."""
     state = request.app.state.studio
     project = {k: state.config[k] for k in ("title", "format", "startMode", "beamerStart", "provenance")}
-    return {**state.status(), "project": {**project, "jobs": list(state.config["jobs"])}}
+    # a project of its own (HTML, with studio.json) and no publish job yet: the UI offers to register a site
+    register = (state.config.get("format") == "html" and "publish" not in state.config["jobs"]
+                and (state.kit_root / "studio.json").is_file())
+    return {**state.status(), "project": {**project, "jobs": list(state.config["jobs"]), "registerSite": register}}
 
 
 @router.get("/deck")

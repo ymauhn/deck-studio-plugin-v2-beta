@@ -1,0 +1,11 @@
+{
+  "steps": [
+    { "tool": "Read", "input": { "file_path": "../notas-do-pedido-e2e.md" } },
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/99-pedido.html",
+                                 "old_string": "Texto antigo do pedido", "new_string": "Texto novo do pedido" } },
+    { "tool": "Bash", "input": { "command": "node deck/build.mjs --pt 2>&1 | tail -2 && node deck/build.mjs 2>&1 | tail -2", "description": "Build" } },
+    { "tool": "Bash", "input": { "command": "NX_PT=1 python -I qa/run_all.py 2>&1 | tail -5", "description": "QA" } },
+    { "tool": "Bash", "input": { "command": "grep -n \"pedido\" deck/src/slides/99-pedido.html", "description": "Conferir" } },
+    { "say": "Pronto." }
+  ]
+}

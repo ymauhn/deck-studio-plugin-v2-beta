@@ -24,6 +24,8 @@ export default async function language(studio) {
       return b;
     }));
     const other = state.languages.find((l) => l.code !== state.active);
+    // only a language that is neither the base nor a tree of its own (NEXUS-GO's deck/src-pt) is made by the agent
+    translate.hidden = other.code === state.base || other.tree;
     translate.textContent = `Traduzir para ${other.label.toLowerCase()}`;
     translate.dataset.lang = other.code;
     translate.dataset.available = String(other.available);

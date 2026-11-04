@@ -23,6 +23,49 @@ export default function (studio) {
     bar.append(buttons[name]);
   }
 
+  // a project of its own (HTML, made by Deck Studio) without a site yet: register one, and Publicar shows
+  if (studio.project?.registerSite) {
+    const register = Object.assign(document.createElement('button'), {
+      type: 'button', className: 'btn register-site', textContent: 'Cadastrar link de publicação',
+      title: 'Liga este projeto a um site do Netlify; depois, Publicar atualiza esse site',
+    });
+    register.addEventListener('click', () => registerSite());
+    bar.append(register);
+  }
+
+  async function registerSite() {
+    const dialog = Object.assign(document.createElement('dialog'), { className: 'settings register-dialog' });
+    dialog.setAttribute('aria-label', 'Cadastrar link de publicação');
+    dialog.innerHTML = `<h2>Cadastrar link de publicação</h2>
+      <form method="dialog">
+        <p class="settings-row"><label for="site-name">Nome do site no Netlify</label>
+          <input id="site-name" required pattern="[a-z0-9\\-]+" placeholder="minha-apresentacao"><span>.netlify.app</span></p>
+        <fieldset><legend>O site</legend>
+          <label><input type="radio" name="site-kind" value="existing" checked> já existe na minha conta do Netlify</label>
+          <label><input type="radio" name="site-kind" value="create"> criar um site novo com esse nome</label>
+        </fieldset>
+        <p class="small">O login do Netlify é o desta máquina (npx netlify login). O site sai com noindex.</p>
+        <div class="settings-actions"><button type="button" class="btn" value="cancel">Cancelar</button>
+          <button type="submit" class="btn primary">Cadastrar</button></div>
+      </form>`;
+    document.body.append(dialog);
+    dialog.querySelector('button[value="cancel"]').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('close', () => dialog.remove());
+    dialog.querySelector('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = dialog.querySelector('#site-name').value.trim().toLowerCase();
+      const create = dialog.querySelector('input[name="site-kind"]:checked').value === 'create';
+      if (create && !(await studio.ui.confirm(`Criar o site ${name}.netlify.app no Netlify? Ele fica no ar, sem conteúdo, até o primeiro Publicar.`))) return;
+      const { status, data } = await studio.api('/api/publish-site', { name, create, confirm: create });
+      if (status !== 200) return studio.ui.toast(data?.message ?? `O link não foi cadastrado (erro ${status}).`, 'error');
+      dialog.close();
+      studio.ui.toast(`Link cadastrado: ${data.url}. Publicar já está na barra.`, 'ok');
+      setTimeout(() => location.reload(), 900);
+    });
+    dialog.showModal();
+    dialog.querySelector('#site-name').focus();
+  }
+
   const list = Object.assign(document.createElement('div'), { className: 'jobs-list' });
   const drawer = studio.ui.addPanel({ id: 'jobs', title: 'Tarefas', side: 'bottom', element: list });
   drawer.hidden = true;
@@ -48,9 +91,10 @@ export default function (studio) {
 
   // publishing goes out to the web: ask first, naming the site once the kit knows it
   async function publish() {
-    const url = (await studio.api('/api/jobs/site')).data?.url;
+    const { url, paths = ['/'] } = (await studio.api('/api/jobs/site')).data ?? {};
     const where = url ? `em ${url}` : 'no Netlify';
-    if (await studio.ui.confirm(`Publicar o deck ${where}? Quem abrir o link passa a ver esta versão.`)) start('publish', { confirm: true });
+    const both = paths.length > 1 ? ` As duas versões vão juntas: ${paths.join(' e ')}.` : '';
+    if (await studio.ui.confirm(`Publicar o deck ${where}?${both} Quem abrir o link passa a ver esta versão.`)) start('publish', { confirm: true });
   }
 
   // one card per job name: a new run replaces the card of the previous one and opens the drawer

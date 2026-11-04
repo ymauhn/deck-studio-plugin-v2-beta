@@ -12,4 +12,4 @@ router = APIRouter()
 @router.get("/api/provenance")
 def provenance(request: Request):  # sync: a cold build (about 70 ms) runs in the thread pool, not on the loop
     state = request.app.state.studio
-    return build_index(state.kit_root) if state.config["provenance"] else {}
+    return build_index(state.kit_root, state.config["slidesDir"]) if state.config["provenance"] else {}

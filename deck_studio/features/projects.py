@@ -24,6 +24,7 @@ from pathlib import Path, PureWindowsPath
 from urllib.parse import unquote
 
 from fastapi import APIRouter, Request
+from starlette.datastructures import UploadFile
 
 from deck_studio import projects
 from deck_studio.__main__ import DEFAULT_KIT
@@ -31,7 +32,11 @@ from deck_studio.features.files import plain
 from deck_studio.server.api import ApiError, json_body
 
 router = APIRouter()
-LIMIT = 100 * 1024 * 1024  # bytes of PDF
+LIMIT = 100 * 1024 * 1024  # bytes of PDF, and of all the files of a folder together
+FILES_LIMIT = 200  # files in a folder import
+# what a folder import keeps: the sources the agent reads and the images it may put on slides
+KEPT = {".pdf", ".md", ".txt", ".tex", ".bib", ".csv", ".json", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
+IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
 BUILTIN = "NEXUS-GO (kit da defesa)"  # the default kit, in the list; its studio's data dir is the home
 NOT_EMPTY = "Esta pasta já existe e tem arquivos. Escolha uma pasta nova ou vazia."
 EXAMPLE = "C:\\Users\\voce\\Deck Studio\\Projeto"
@@ -163,6 +168,159 @@ def list_projects(request: Request):
             "projects": [*builtin, *imported], "projectsFolder": str(projects_folder(state))}
 
 
+def context_path(name):
+    """A file's path inside context/ as the browser sends it (a folder's relative path): each part plain, no "..",
+    at most 4 levels; None when it cannot be used."""
+    parts = [p for p in re.split(r"[\\/]+", name or "") if p]
+    if not parts or len(parts) > 4 or any(p in (".", "..") or not plain(p) for p in parts):
+        return None
+    return "/".join(parts)
+
+
+@router.post("/api/projects/import-files", status_code=201)
+async def import_files(request: Request, name: str = "", format: str = "", language: str = "", folder: str = "",
+                       notes: str = ""):
+    """A new talk from a folder, or several files: multipart/form-data with a `files` field per file, whose file
+    name is its path in the folder (the browser's webkitRelativePath). Every PDF is extracted into
+    context/<its slug>/, as the single-PDF import does; the other files go to context/ as they are."""
+    state = request.app.state.studio
+    form = await request.form(max_files=FILES_LIMIT + 1, max_part_size=LIMIT)
+    uploads = [f for f in form.getlist("files") if isinstance(f, UploadFile)]
+    name, notes = name.strip(), notes.strip()
+    _check_fields(name, format, language, notes)
+    if not uploads:
+        raise ApiError(400, "no-files", "Escolha uma pasta ou alguns arquivos.")
+    if len(uploads) > FILES_LIMIT:
+        raise ApiError(400, "too-many", f"A pasta passa de {FILES_LIMIT} arquivos.")
+    files, skipped, total = {}, [], 0
+    for upload in uploads:
+        rel = context_path(upload.filename)
+        if rel is None or Path(rel).suffix.lower() not in KEPT:
+            skipped.append(upload.filename or "?")
+            continue
+        data = await upload.read()
+        total += len(data)
+        if total > LIMIT:
+            raise ApiError(400, "too-large", "Os arquivos passam de 100 MB juntos.")
+        if rel.lower().endswith(".pdf") and not data.startswith(b"%PDF-"):
+            raise ApiError(400, "not-pdf", f"{rel} não é um PDF.")
+        files[rel] = data
+    if not files:
+        raise ApiError(400, "no-files", "Nenhum arquivo da pasta serve: use PDF, .md, .tex, .bib, .txt ou imagens.")
+    pdfs = [rel for rel in files if rel.lower().endswith(".pdf")]
+
+    def write(target, slug):
+        projects.create_from_files(target, name, slug, format, language, files, pdfs[0] if pdfs else "")
+
+    extracted = {}  # pdf -> its folder in context/
+
+    async def extract(target, slug):
+        taken, infos = set(), []
+        for pdf in pdfs:
+            out = projects.slug_of(Path(pdf).stem, taken | {slug}) if len(pdfs) > 1 else slug
+            taken.add(out)
+            extracted[pdf] = out
+            infos.append(await projects.extract(target / "context" / pdf, target / "context" / out))
+        return infos
+
+    def message(slug, scanned):
+        lines = []
+        for rel in sorted(files):
+            if rel in extracted:
+                lines.append(f"- `context/{rel}`: o texto em `context/{extracted[rel]}/texto.md`, as figuras em "
+                             f"`context/{extracted[rel]}/figuras`")
+            else:
+                kind = "imagem" if Path(rel).suffix.lower() in IMAGES else "texto"
+                lines.append(f"- `context/{rel}` ({kind})")
+        text = state.config.get("importFolderMessage", projects.FOLDER_MESSAGE).format(
+            format_name=projects.FORMATS[format], language=projects.LANGUAGES[language][2], files="\n".join(lines))
+        for pdf, scan_ in zip(pdfs, scanned):
+            if scan_:
+                text += (f"\n\nO PDF `context/{pdf}` quase não tem texto selecionável (parece escaneado): leia as "
+                         "páginas dele com a ferramenta Read.")
+        if skipped:
+            text += f"\n\nFicaram de fora (tipo não aceito): {', '.join(sorted(skipped)[:20])}."
+        return text
+
+    result = await _open_new(state, name, format, language, folder, notes, write, extract, message)
+    if skipped:
+        result["skipped"] = sorted(skipped)
+    return result
+
+
+def _check_fields(name, format, language, notes):
+    if not plain(name):
+        raise ApiError(400, "bad-name", 'Dê um nome ao projeto, sem os caracteres / \\ : * ? " < > |.')
+    if format not in projects.FORMATS:
+        raise ApiError(400, "bad-format", "Escolha o formato: HTML ou Beamer.")
+    if language not in projects.LANGUAGES:
+        raise ApiError(400, "bad-language", "Escolha o idioma dos slides: português ou inglês.")
+    if len(notes) > NOTES_LIMIT:
+        raise ApiError(400, "bad-notes", f"As instruções para o agente passam de {NOTES_LIMIT} caracteres.")
+
+
+def scan(info):
+    """Whether an extracted PDF has almost no text: a scan, which the agent reads as page images."""
+    return info.get("words", 0) < SCANNED_WORDS * max(1, info.get("pages", 1))
+
+
+async def _open_new(state, name, format, language, folder, notes, write, extract, message):
+    """The steps both imports share: the folder (the suggested one, or the author's), the slug, the files (write),
+    the extraction (extract -> infos), the registry, the project's studio and its first request (message(slug,
+    scanned), then the author's notes); `scanned` says, per PDF, whether it looks scanned. Anything that fails
+    leaves nothing behind."""
+    async with lock(state):
+        known = projects.registry(state.home)
+        default = default_folder(state, name)
+        if not folder or os.path.normcase(os.path.normpath(folder)) == os.path.normcase(default):
+            folder = str(free(default))  # the suggested folder: a second import of a name goes to "<Nome> (2)"
+        target = checked_folder(state, folder, known)
+        slug = projects.reserve(state.home, name, {p["slug"] for p in known})
+        data_dir, existed = state.home / "projects" / slug, target.exists()
+
+        def undo(folder_too=True):  # nothing is left behind: the folder as it was, and the slug free again
+            if folder_too:
+                projects.discard(target, existed)
+            try:
+                data_dir.rmdir()
+            except OSError:
+                pass
+
+        try:
+            await asyncio.to_thread(write, target, slug)
+        except FileExistsError:  # files came meanwhile: nothing was written, and those files are not ours
+            undo(folder_too=False)
+            raise ApiError(400, "folder-not-empty", NOT_EMPTY) from None
+        except OSError as e:
+            undo()
+            print(f"Deck Studio: o projeto não foi criado em {target}: {e}", file=sys.stderr, flush=True)
+            raise ApiError(400, "folder-error", "Não foi possível criar o projeto nesta pasta. Confira se o disco "
+                                                "existe e se você pode gravar nela.") from None
+        try:
+            infos = await extract(target, slug)
+            project = projects.entry(name, slug, target, format, language)
+            await asyncio.to_thread(projects.register, state.home, project)
+        except OSError as e:  # the registry could not be written
+            undo()
+            print(f"Deck Studio: o projeto {target} não entrou na lista: {e}", file=sys.stderr, flush=True)
+            raise ApiError(500, "no-register", "O projeto não entrou na lista de projetos. Tente de novo.") from None
+        except BaseException:
+            undo()
+            raise
+        await state.events.publish("projects", step="opening", name=name)
+        url = await studio_url(state, target, data_dir)
+    scanned = [scan(i) for i in infos]
+    text = message(slug, scanned)
+    if notes:
+        text += f"\n\nInstruções do autor: {notes}"
+    try:
+        chat = await asyncio.to_thread(projects.send_first, url, text)
+    except OSError:
+        raise ApiError(500, "no-request", "O projeto abriu, mas o pedido não chegou ao agente. Abra o projeto em "
+                                          "Projetos e peça a apresentação no chat.") from None
+    return {"project": project, "url": f"{url}#chat={chat}", **({"warning": SCANNED} if any(scanned) else {})}
+
+
 @router.post("/api/projects/import", status_code=201)
 async def import_pdf(request: Request, name: str = "", format: str = "", language: str = "", folder: str = "",
                      notes: str = ""):
@@ -176,76 +334,31 @@ async def import_pdf(request: Request, name: str = "", format: str = "", languag
     except ValueError:
         file_name = ""
     name, notes = name.strip(), notes.strip()
-    if not plain(name):
-        raise ApiError(400, "bad-name", 'Dê um nome ao projeto, sem os caracteres / \\ : * ? " < > |.')
-    if format not in projects.FORMATS:
-        raise ApiError(400, "bad-format", "Escolha o formato: HTML ou Beamer.")
-    if language not in projects.LANGUAGES:
-        raise ApiError(400, "bad-language", "Escolha o idioma dos slides: português ou inglês.")
-    if len(notes) > NOTES_LIMIT:
-        raise ApiError(400, "bad-notes", f"As instruções para o agente passam de {NOTES_LIMIT} caracteres.")
+    _check_fields(name, format, language, notes)
     if not plain(file_name) or not file_name.lower().endswith(".pdf"):
         raise ApiError(400, "bad-file", "Escolha um arquivo .pdf.")
     if len(pdf) > LIMIT:
         raise ApiError(400, "too-large", "O PDF passa de 100 MB.")
     if not pdf.startswith(b"%PDF-"):
         raise ApiError(400, "not-pdf", "Este arquivo não é um PDF.")
-    async with lock(state):
-        known = projects.registry(state.home)
-        default = default_folder(state, name)
-        if not folder or os.path.normcase(os.path.normpath(folder)) == os.path.normcase(default):
-            folder = str(free(default))  # the suggested folder: a second import of a name goes to "<Nome> (2)"
-        target = checked_folder(state, folder, known)
-        slug = projects.reserve(state.home, name, {p["slug"] for p in known})
-        data_dir, saved, existed = state.home / "projects" / slug, projects.pdf_name(file_name), target.exists()
+    saved = projects.pdf_name(file_name)
 
-        def undo(folder_too=True):  # nothing is left behind: the folder as it was, and the slug free again
-            if folder_too:
-                projects.discard(target, existed)
-            try:
-                data_dir.rmdir()
-            except OSError:
-                pass
+    def write(target, slug):
+        projects.create(target, name, slug, format, language, saved, bytes(pdf))
 
-        try:
-            await asyncio.to_thread(projects.create, target, name, slug, format, language, saved, bytes(pdf))
-        except FileExistsError:  # files came meanwhile: nothing was written, and those files are not ours
-            undo(folder_too=False)
-            raise ApiError(400, "folder-not-empty", NOT_EMPTY) from None
-        except OSError as e:
-            undo()
-            print(f"Deck Studio: o projeto não foi criado em {target}: {e}", file=sys.stderr, flush=True)
-            raise ApiError(400, "folder-error", "Não foi possível criar o projeto nesta pasta. Confira se o disco "
-                                                "existe e se você pode gravar nela.") from None
-        try:
-            info = await projects.extract(target / "context" / saved, target / "context" / slug)
-            project = projects.entry(name, slug, target, format, language)
-            await asyncio.to_thread(projects.register, state.home, project)
-        except OSError as e:  # the registry could not be written
-            undo()
-            print(f"Deck Studio: o projeto {target} não entrou na lista: {e}", file=sys.stderr, flush=True)
-            raise ApiError(500, "no-register", "O projeto não entrou na lista de projetos. Tente de novo.") from None
-        except BaseException:
-            undo()
-            raise
-        await state.events.publish("projects", step="opening", name=name)
-        url = await studio_url(state, target, data_dir)
-    pdf_path = f"context/{saved}"
-    text = state.config.get("importMessage", projects.MESSAGE).format(
-        pdf=pdf_path, format=format, format_name=projects.FORMATS[format], language=projects.LANGUAGES[language][2],
-        text=f"context/{slug}/texto.md", figures=f"context/{slug}/figuras")
-    scanned = info.get("words", 0) < SCANNED_WORDS * max(1, info.get("pages", 1))
-    if scanned:
-        text += (f"\n\nO PDF quase não tem texto selecionável (parece escaneado): leia as páginas de `{pdf_path}` com a "
-                 "ferramenta Read.")
-    if notes:
-        text += f"\n\nInstruções do autor: {notes}"
-    try:
-        chat = await asyncio.to_thread(projects.send_first, url, text)
-    except OSError:
-        raise ApiError(500, "no-request", "O projeto abriu, mas o pedido não chegou ao agente. Abra o projeto em "
-                                          "Projetos e peça a apresentação no chat.") from None
-    return {"project": project, "url": f"{url}#chat={chat}", **({"warning": SCANNED} if scanned else {})}
+    async def extract(target, slug):
+        return [await projects.extract(target / "context" / saved, target / "context" / slug)]
+
+    def message(slug, scanned):
+        text = state.config.get("importMessage", projects.MESSAGE).format(
+            pdf=f"context/{saved}", format=format, format_name=projects.FORMATS[format],
+            language=projects.LANGUAGES[language][2], text=f"context/{slug}/texto.md", figures=f"context/{slug}/figuras")
+        if scanned[0]:
+            text += (f"\n\nO PDF quase não tem texto selecionável (parece escaneado): leia as páginas de "
+                     f"`context/{saved}` com a ferramenta Read.")
+        return text
+
+    return await _open_new(state, name, format, language, folder, notes, write, extract, message)
 
 
 @router.post("/api/projects/open")

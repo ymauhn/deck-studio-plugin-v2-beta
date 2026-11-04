@@ -104,7 +104,8 @@ def _approved_write(studio, page):
     send(page, "#scenario:write-tools")
     card = page.get_by_role("article", name="Aprovação: Write")
     expect(card).to_contain_text("tools/nota-do-agente.txt")
-    expect(card).to_contain_text("fora da área liberada")
+    # tools/ holds code the studio runs: it asks at every level (review of PR #3)
+    expect(card).to_contain_text("o estúdio roda este código")
     card.get_by_role("button", name="Permitir").click()
     expect(answers(page).last).to_have_text("Escrevi a nota.")
     assert page.evaluate("() => window.turnEnd")["files"] == ["tools/nota-do-agente.txt"]

@@ -38,6 +38,8 @@ def turn_end(page):
 
 def test_an_allowed_edit_rebuilds_and_reloads_the_deck_in_place_and_the_turn_end_lists_the_file(studio, studio_page):
     page = studio_page
+    # following the agent (on by default) would show the edited slide at its last step: off, the deck stays put
+    page.get_by_role("button", name="Seguir o agente").click()
     go_slide(page, 13, 3)
     catch_turn_end(page)
     send(page, "#scenario:edit-slide")
