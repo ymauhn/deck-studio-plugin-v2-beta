@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 from playwright.sync_api import expect
 
+from deck_studio.core import plataforma
 from deck_studio.templates import fill_template
 from tests.e2e.conftest import (ROOT, SCENARIOS, built, deck_of, go_slide, open_studio, run_studio, safe_jobs,
                                 status_of, wait_until)
@@ -141,7 +142,7 @@ def test_a_studio_started_with_parent_pid_exits_when_that_process_ends(api):
         with run_studio("--parent-pid", parent.pid) as s:
             built(s, api)  # no build of its own is left running
             assert status_of(s, api)["busy"] is False
-            subprocess.run(["taskkill", "/F", "/PID", str(parent.pid)], capture_output=True)  # ends hard
+            parent.kill()  # ends hard
             assert s.proc.wait(timeout=20) == 0
     finally:
         parent.kill()
@@ -166,7 +167,8 @@ def test_a_project_opened_by_hand_never_runs_on_the_default_kits_data_dir(tmp_pa
     proc = subprocess.Popen(
         [sys.executable, "-m", "deck_studio", "--kit", str(kit), "--port", "0", "--no-open", "--fake-agent",
          str(SCENARIOS), "--config", str(config)], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        text=True, encoding="utf-8", env={**os.environ, "LOCALAPPDATA": str(local)})
+        text=True, encoding="utf-8", env={**os.environ, "LOCALAPPDATA": str(local), "XDG_DATA_HOME": str(local)},
+        **plataforma.NEW_GROUP)
     try:
         if registered:
             url = re.fullmatch(r"DECK_STUDIO_URL=(\S+)\n", proc.stdout.readline())[1]
@@ -176,7 +178,7 @@ def test_a_project_opened_by_hand_never_runs_on_the_default_kits_data_dir(tmp_pa
             assert "fora da lista de projetos" in proc.stderr.read()
         assert not (home / "studio.lock").exists()
     finally:
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        plataforma.kill_tree(proc.pid)
         proc.wait()
 
 

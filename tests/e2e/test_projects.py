@@ -653,7 +653,7 @@ def test_a_project_studio_ends_with_the_studio_that_started_it_and_abrir_starts_
         assert r.status == 201, r.text()
         child = launch_url(r.json())
         assert answers(child)
-        subprocess.run(["taskkill", "/F", "/PID", str(parent.proc.pid)], capture_output=True)  # it alone, no /T
+        parent.proc.kill()  # it alone, not its tree
         parent.proc.wait()
         wait_until(lambda: not answers(child), timeout=20, message="the project's studio to end")
         with run_studio("--home", parent.data, kit=parent.kit) as again:  # the same home, after a restart
@@ -667,9 +667,13 @@ def test_a_project_studio_ends_with_the_studio_that_started_it_and_abrir_starts_
 
 APP = Path(__file__).resolve().parents[2]
 PEAK = """import ctypes, sys
-from ctypes import wintypes
 from deck_studio.pdf_import import extract
 extract(sys.argv[1], sys.argv[2])
+if sys.platform != "win32":
+    import resource
+    print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)  # KB on Linux
+    sys.exit()
+from ctypes import wintypes
 class Counters(ctypes.Structure):
     _fields_ = [("cb", wintypes.DWORD), ("faults", wintypes.DWORD), ("peak", ctypes.c_size_t)] + [
         (f"other{i}", ctypes.c_size_t) for i in range(7)]

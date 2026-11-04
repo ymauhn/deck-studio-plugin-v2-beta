@@ -21,6 +21,7 @@ from urllib.parse import parse_qs, urlsplit
 import pymupdf
 import pytest
 
+from deck_studio.core import plataforma
 from tests.helpers.kit_copy import make_kit_copy, remove_kit_copy
 
 pytestmark = pytest.mark.skipif(os.environ.get("STUDIO_LIVE") != "1", reason="live SDK smoke: set STUDIO_LIVE=1")
@@ -89,7 +90,7 @@ def live():
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("ANTHROPIC_", "CLAUDE"))}
     proc = subprocess.Popen([sys.executable, "-m", "deck_studio", "--kit", str(kit), "--port", "0", "--data", str(data),
                              "--no-open"], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                            encoding="utf-8", env=env)
+                            encoding="utf-8", env=env, **plataforma.NEW_GROUP)
     stderr = []  # kept, and shown as it comes
 
     def drain_stderr():
@@ -103,7 +104,7 @@ def live():
         u = urlsplit(url)
         yield Live(f"{u.scheme}://{u.netloc}", parse_qs(u.query)["t"][0], kit, data, stderr)
     finally:
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        plataforma.kill_tree(proc.pid)
         proc.wait()
         remove_kit_copy(kit)
         shutil.rmtree(data, ignore_errors=True)
