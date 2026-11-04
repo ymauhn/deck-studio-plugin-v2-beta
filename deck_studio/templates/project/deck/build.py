@@ -1,4 +1,4 @@
-"""Build the deck: deck/src/shell.html + deck.css + engine.js + slides/*.html (in name order) -> one HTML file.
+"""Build the deck: deck/src/shell.html + fonts.css + deck.css + engine.js + slides/*.html (in name order) -> one HTML file.
 
 Usage: python -I -X utf8 deck/build.py [--studio]
              deck/dist/deck.html, the deck to present and share
@@ -151,7 +151,9 @@ def main(studio):
     slides = inline_images("\n".join(locate(f"deck/src/slides/{f.name}", texts[f], parsed[f].found) if studio
                                      else texts[f] for f in files))
     js = re.sub(r"</(script)", r"<\\/\1", read(SRC / "engine.js") + "\nstartDeck({}, {});\n", flags=re.I)
-    html = fill(read(SRC / "deck.css"), slides, js)
+    # the embedded fonts (deck/src/fonts.css, OFL) come first, so the deck reads the same offline
+    fonts = read(SRC / "fonts.css") + "\n" if (SRC / "fonts.css").is_file() else ""
+    html = fill(fonts + read(SRC / "deck.css"), slides, js)
     out = DECK / "build" / "studio" / "deck.html" if studio else DECK / "dist" / "deck.html"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(html.encode("utf-8"))
