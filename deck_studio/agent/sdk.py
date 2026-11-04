@@ -37,6 +37,7 @@ def make_options(state, model, session):
     return ClaudeAgentOptions(
         cwd=state.kit_root,
         model=model or state.settings.get("model") or "opus",
+        effort=session.effort or None,  # None: the model's own default
         skills=selected_skills(state),
         resume=session.resume,  # by id, never "continue": that would pick the author's own last conversation
         permission_mode="default",  # explicit: the author's own settings default to auto

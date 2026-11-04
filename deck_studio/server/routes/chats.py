@@ -18,6 +18,8 @@ from deck_studio.agent.session import ChatSession
 from deck_studio.server.api import ApiError, json_body
 
 MODELS = ["opus", "sonnet", "haiku"]  # Claude Code model aliases; Opus for new chats
+# reasoning effort levels of the Agent SDK (EffortLevel); "" is the model's own default
+EFFORTS = ["", "low", "medium", "high", "xhigh", "max"]
 # the chat events a conversation is redrawn from (plus turn-ends with files)
 KEPT = {"user", "text", "error", "notice", "tool"}
 
@@ -27,6 +29,7 @@ class Chat:
     id: str
     title: str
     model: str
+    effort: str = ""
     session_id: str | None = None  # the SDK session this chat continues
     messages: list = field(default_factory=list)  # the kept chat events
     created: float = field(default_factory=time.time)
@@ -36,11 +39,11 @@ class Chat:
     session: ChatSession | None = None
 
     def public(self):
-        return {"id": self.id, "title": self.title, "model": self.model, "running": bool(self.turn),
+        return {"id": self.id, "title": self.title, "model": self.model, "effort": self.effort, "running": bool(self.turn),
                 "restored": self.restored, "updated": self.updated, "messages": self.messages}
 
     def saved(self):
-        return {"id": self.id, "title": self.title, "model": self.model, "sessionId": self.session_id,
+        return {"id": self.id, "title": self.title, "model": self.model, "effort": self.effort, "sessionId": self.session_id,
                 "created": self.created, "updated": self.updated, "messages": self.messages}
 
 
@@ -69,8 +72,8 @@ async def lifespan(app):
     for file in folder(state).glob("*.json"):
         try:
             d = json.loads(file.read_text(encoding="utf-8"))
-            loaded.append(Chat(file.stem, d["title"], d["model"], d.get("sessionId"), d["messages"], d["created"],
-                               d["updated"], restored=True))
+            loaded.append(Chat(file.stem, d["title"], d["model"], d.get("effort") or "", d.get("sessionId"),
+                               d["messages"], d["created"], d["updated"], restored=True))
         except (OSError, ValueError, KeyError, TypeError):
             continue
     for chat in sorted(loaded, key=lambda c: c.created):
@@ -132,12 +135,15 @@ def list_chats(request: Request):
 
 @router.post("/api/chats", status_code=201)
 async def new_chat(request: Request):
-    """A new chat ({model?}); without a model it takes the settings' model of new chats."""
+    """A new chat ({model?, effort?}); without them it takes the settings' model and effort of new chats."""
     state = request.app.state.studio
-    model = (await json_body(request)).get("model")
+    body = await json_body(request)
+    model, effort = body.get("model"), body.get("effort")
     if model not in MODELS:
         model = state.settings.get("model", MODELS[0])
-    chat = Chat(str(uuid.uuid4()), next_title(state.chats), model)
+    if effort not in EFFORTS:
+        effort = state.settings.get("effort", "")
+    chat = Chat(str(uuid.uuid4()), next_title(state.chats), model, effort)
     state.chats[chat.id] = chat
     save(state, chat)
     return chat.public()
@@ -158,7 +164,7 @@ async def send_message(chat_id: str, request: Request):
     await state.turn_lock.acquire()  # released by this turn's turn-end, which every session path emits
     if chat.session is None or chat.session.closed:  # a refused or ended session is replaced, resuming the chat's
         chat.session = ChatSession(state, chat.id, chat.model, lambda e: on_session_event(state, chat, e),
-                                   resume=chat.session_id)
+                                   resume=chat.session_id, effort=chat.effort)
     turn_id = chat.turn = str(uuid.uuid4())
     state.selection = selection
     await state.publish_status()
@@ -185,6 +191,20 @@ async def set_model(chat_id: str, request: Request):
     chat.model = model
     if chat.session:
         chat.session.model = model
+    save(request.app.state.studio, chat)
+    return chat.public()
+
+
+@router.post("/api/chats/{chat_id}/effort")
+async def set_effort(chat_id: str, request: Request):
+    """The chat's reasoning effort; the agent reconnects with it on the next turn, in the same conversation."""
+    chat = chat_of(request, chat_id)
+    effort = (await json_body(request)).get("effort")
+    if effort not in EFFORTS:
+        raise ApiError(400, "effort", "Nível de esforço desconhecido.")
+    chat.effort = effort
+    if chat.session:
+        chat.session.effort = effort
     save(request.app.state.studio, chat)
     return chat.public()
 

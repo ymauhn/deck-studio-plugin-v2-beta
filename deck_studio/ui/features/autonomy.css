@@ -1,0 +1,8 @@
+.autonomy { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.autonomy-label { font: 600 11px/1 var(--font-body); color: var(--ink2); margin-right: 4px; }
+.autonomy button {
+  font: 500 11px/1 var(--font-body); color: var(--ink2); background: var(--raised); cursor: pointer;
+  border: 1px solid var(--hair); border-radius: 999px; padding: 5px 9px;
+}
+.autonomy button:hover { border-color: var(--muted); }
+.autonomy button[aria-checked="true"] { background: var(--seq-t); border-color: var(--seq); color: var(--seq-ink); }

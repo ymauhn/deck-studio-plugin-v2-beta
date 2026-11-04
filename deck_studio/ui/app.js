@@ -283,6 +283,7 @@ function select(id) {
   chat.tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });  // a selected tab past the row's edge comes into view
   chat.log.scrollTop = chat.log.scrollHeight;
   $('model').value = chat.model;
+  $('effort').value = chat.effort ?? '';
   $('stop').hidden = !chat.running;
   try { sessionStorage.setItem('studio-chat', id); } catch { /* a reload then opens another chat */ }
 }
@@ -379,6 +380,10 @@ const chatReady = (async () => {
 $('model').addEventListener('change', (e) => {
   chat.model = e.target.value;
   api(`/api/chats/${chat.id}/model`, { model: chat.model });
+});
+$('effort').addEventListener('change', (e) => {
+  chat.effort = e.target.value;
+  api(`/api/chats/${chat.id}/effort`, { effort: chat.effort });
 });
 
 let drawn = false; // features append while they load; those cards go after the redrawn conversations

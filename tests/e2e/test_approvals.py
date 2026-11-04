@@ -87,8 +87,17 @@ def test_an_approval_without_an_answer_is_denied_when_its_time_runs_out(studio_p
     expect(approval(page).get_by_role("status")).to_have_text("Negado: sem resposta a tempo.")
 
 
-def test_an_approved_write_outside_the_allowed_area_belongs_to_the_turn(studio, studio_page):
+def test_an_approved_write_outside_the_allowed_area_belongs_to_the_turn(studio, studio_page, api):
+    """At the "perguntar sempre" level; the default level writes there without asking (test_autonomy)."""
     page = studio_page
+    assert api.post(f"{studio.base}/api/settings", headers=studio.headers, data={"autonomy": "ask"}).status == 200
+    try:
+        _approved_write(studio, page)
+    finally:
+        api.post(f"{studio.base}/api/settings", headers=studio.headers, data={"autonomy": "deck"})
+
+
+def _approved_write(studio, page):
     page.evaluate("""() => { window.turnEnd = new Promise((resolve) => {
         const off = studio.on('chat', (e) => { if (e.kind === 'turn-end') { off(); resolve(e); } });
     }); }""")

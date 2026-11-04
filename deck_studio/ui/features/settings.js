@@ -1,7 +1,8 @@
-// Settings: the model and the skills of new chats. A button in the chat head opens them in a dialog; "Salvar" keeps
+// Settings: the model, the effort and the skills of new chats. A button in the chat head opens them in a dialog; "Salvar" keeps
 // them in the studio, and the chats opened afterwards use them. Skills come in groups: the project, the user's own,
 // one group per installed plugin, and the ones bundled with Claude Code.
 const MODEL_LABEL = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku' };
+const EFFORT_LABEL = { '': 'Padrão do modelo', low: 'Baixo', medium: 'Médio', high: 'Alto', xhigh: 'Muito alto', max: 'Máximo' };
 const GROUP = { project: 'Do projeto (.claude/skills)', user: 'Suas skills (~/.claude/skills)', bundled: 'Embutidas no Claude Code' };
 const make = (tag, props = {}) => Object.assign(document.createElement(tag), props);
 
@@ -52,6 +53,12 @@ export default function (studio) {
     const modelRow = make('p', { className: 'settings-row' });
     modelRow.append(make('label', { htmlFor: model.id, textContent: 'Modelo dos chats novos' }), model);
 
+    const effort = make('select', { id: 'settings-effort' });
+    for (const e of data.efforts) effort.append(make('option', { value: e, textContent: EFFORT_LABEL[e] ?? e }));
+    effort.value = data.effort;
+    const effortRow = make('p', { className: 'settings-row' });
+    effortRow.append(make('label', { htmlFor: effort.id, textContent: 'Esforço dos chats novos' }), effort);
+
     const skills = make('fieldset', { className: 'skills' });
     skills.append(make('legend', { textContent: 'Skills dos chats novos' }), ...groups(data.skills));
 
@@ -60,7 +67,7 @@ export default function (studio) {
     const save = make('button', { type: 'submit', className: 'btn primary', textContent: 'Salvar' });
     const actions = make('div', { className: 'settings-actions' });
     actions.append(cancel, save);
-    form.append(modelRow, skills, actions);
+    form.append(modelRow, effortRow, skills, actions);
     dialog.append(heading, form);
 
     cancel.addEventListener('click', () => dialog.close());
@@ -68,7 +75,7 @@ export default function (studio) {
       e.preventDefault();
       save.disabled = true;
       const on = [...skills.querySelectorAll('input:checked')].map((b) => b.value);
-      const reply = await studio.api('/api/settings', { model: model.value, skills: on });
+      const reply = await studio.api('/api/settings', { model: model.value, effort: effort.value, skills: on });
       save.disabled = false;
       if (reply.status !== 200) {
         return studio.ui.toast(reply.data?.message ?? `O studio não salvou as configurações (erro ${reply.status}).`, 'error');

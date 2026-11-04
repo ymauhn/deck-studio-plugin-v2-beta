@@ -7,6 +7,18 @@ from dataclasses import dataclass, field
 
 # the tools that write a file, with the input key that names it
 WRITE_TOOLS = {"Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path", "NotebookEdit": "notebook_path"}
+SHELL_TOOLS = ("Bash", "PowerShell")
+# the autonomy levels of the chat switch: perguntar sempre, editar o deck sem perguntar (the default), autônomo
+LEVELS = ("ask", "deck", "auto")
+DEFAULT_LEVEL = "deck"
+# a shell command that may act outside the machine, or reach a file the studio runs or protects, asks at every level.
+# ponytail: a lexical check, not a sandbox; an obfuscated command can slip by, so "auto" is the author's own risk
+EXTERNAL = re.compile(
+    r"publish|netlify|deploy|vercel|\bgit\s+(push|remote)|\bgh\b|\bnpx?\s+(publish|login)|curl|wget|"
+    r"invoke-(webrequest|restmethod)|\b(iwr|irm)\b|\bssh\b|\bscp\b|\bs?ftp\b|https?://|"
+    r"\.(js|mjs|cjs)\b|shell\.html|latexmkrc|claude\.md|\.claude|"
+    r"\.\.|~|\$env:|\$home|%[a-z_]+%|\\\\|(^|[\s\"'=])/[a-z]/", re.I)
+DRIVE_PATH = re.compile(r"[a-z]:[\\/]", re.I)
 
 
 @dataclass
@@ -59,11 +71,42 @@ class Guard:
         self.ask_dirs = [_norm(os.getcwd(), d) for d in c.get("askwritedirs", [])]
         self.readable = [self.root, *(_norm(os.getcwd(), d) for d in c.get("readdirs", []))]
 
-    def check(self, tool_name, tool_input):
+    def check(self, tool_name, tool_input, level=None):
+        """The decision on one tool call. `level` is the chat's autonomy level (LEVELS; any other value is the
+        default); None gives the base rules alone."""
         # tool input comes from the model: a missing or odd path is denied, never thrown on
         tool_input = tool_input if isinstance(tool_input, dict) else {}
+        d = self._check(tool_name, tool_input, level)
+        if level is None or d.behavior != "ask" and not (level == "ask" and tool_name in WRITE_TOOLS):
+            return d
+        level = level if level in LEVELS else DEFAULT_LEVEL
+        if level == "ask" and tool_name in WRITE_TOOLS and d.behavior == "allow":
+            return Decision("ask", "Modo perguntar sempre: toda escrita precisa da sua aprovação.", d.paths)
+        if level != "auto" or d.behavior != "ask":
+            return d
+        if tool_name in ("Read", "Grep", "Glob", "WebFetch", "WebSearch"):
+            return Decision("allow", "Modo autônomo: leitura e consulta liberadas.", d.paths)
+        if tool_name in SHELL_TOOLS and self._local(tool_input.get("command")):
+            return Decision("allow", "Modo autônomo: comando local no deck.")
+        return d
+
+    def _local(self, command):
+        """True for a shell command that names no external action, no protected file and no path outside the kit."""
+        if not isinstance(command, str) or not command.strip() or EXTERNAL.search(command):
+            return False
+        # every absolute path in it, quoted (with spaces) or not, must be inside the kit
+        quoted = re.findall(r"\"([^\"]*)\"|'([^']*)'", command)
+        bare = re.sub(r"\"[^\"]*\"|'[^']*'", " ", command)
+        tokens = [a or b for a, b in quoted] + bare.split()
+        for token in tokens:
+            m = DRIVE_PATH.search(token)
+            if m and _inside(self.root, _norm(self.root, token[m.start():].strip("<>|;,()"))) is None:
+                return False
+        return True
+
+    def _check(self, tool_name, tool_input, level):
         if tool_name in WRITE_TOOLS:
-            return self._write(self.write_path(tool_name, tool_input))
+            return self._write(self.write_path(tool_name, tool_input), level)
         if tool_name == "Read":
             return self._read(self._target(tool_input.get("file_path")))
         if tool_name in ("Grep", "Glob"):
@@ -77,7 +120,7 @@ class Guard:
                 if reach.behavior != "allow":
                     return Decision(reach.behavior, reach.reason, base.paths)
             return base
-        if tool_name in ("Bash", "PowerShell"):
+        if tool_name in SHELL_TOOLS:
             return Decision("ask", "Comando de terminal: precisa da sua aprovação. O desfazer não cobre o que ele mudar.")
         if tool_name in ("WebFetch", "WebSearch"):
             return Decision("ask", "Acesso à web: precisa da sua aprovação.")
@@ -102,7 +145,7 @@ class Guard:
             return Decision("allow", "Leitura liberada.", [target])
         return Decision("ask", "Leitura fora do deck: precisa da sua aprovação.", [target])
 
-    def _write(self, target):
+    def _write(self, target, level=None):
         if target is None:
             return _bad()
         rel = _inside(self.root, target)
@@ -122,6 +165,8 @@ class Guard:
                             [target])
         if any(_covers(rel, p) for p in self.allow_write):
             return Decision("allow", "Escrita na área liberada do deck.", [target])
+        if level is not None and level != "ask":  # deck and auto: any unprotected kit file
+            return Decision("allow", "Escrita no deck, liberada pelo nível de autonomia.", [target])
         return Decision("ask", "Escrita no deck fora da área liberada: precisa da sua aprovação.", [target])
 
 
