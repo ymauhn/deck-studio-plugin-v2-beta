@@ -4,6 +4,7 @@ screenshot_beamer_page compile and show that deck as the Beamer view does."""
 import json
 import re
 import tempfile
+import zipfile
 from pathlib import Path
 
 import pymupdf
@@ -173,13 +174,57 @@ def test_abrir_pdf_in_the_beamer_bar_opens_the_pdf_of_the_decks_last_compile(stu
         assert "Opened as a PDF." in d[1].get_text()
 
 
-def test_exportar_para_overleaf_runs_the_overleaf_job_with_its_log_in_tarefas(studio_page):
-    page = studio_page
-    expect(page.get_by_role("banner").locator(".jobs-bar button")).to_have_text(["Exportar para Overleaf"])
-    page.get_by_role("banner").get_by_role("button", name="Exportar para Overleaf").click()
-    card = page.get_by_role("region", name="Tarefas").get_by_role("article", name="Exportar para Overleaf")
-    expect(card.get_by_role("status")).to_have_text(re.compile(r"^concluído em \d+,\d s$"))
-    expect(card.get_by_role("log")).to_contain_text("stand-in for the overleaf job")  # never the project's own tool
+RICH = r"""\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\graphicspath{{figures/}{logos/}}
+\begin{document}
+\begin{frame}{Tabela}
+  \input{tables.tex}
+\end{frame}
+\begin{frame}{Figura}
+  \includegraphics[width=3cm]{grafico}\quad\includegraphics[width=1cm]{logo}
+  Como em \cite{luque2026}.
+\end{frame}
+\begin{frame}{Refer\^encias}
+  \bibliographystyle{plain}
+  \bibliography{refs}
+\end{frame}
+\end{document}
+"""
+
+
+def png(path, rgb):
+    doc = pymupdf.open()
+    page = doc.new_page(width=40, height=30)
+    page.draw_rect(page.rect, color=rgb, fill=rgb)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(page.get_pixmap().tobytes("png"))
+
+
+def test_exportar_para_o_overleaf_zips_what_the_deck_reads_with_the_last_pdf_and_a_copy_compiles_alone(studio, page,
+                                                                                                         api):
+    deck = studio.kit / "beamer" / "apresentacao"
+    (deck / "apresentacao.tex").write_text(RICH, encoding="utf-8")
+    (deck / "tables.tex").write_text("\\begin{tabular}{lr} a & 1,5 \\\\ b & 2,0 \\end{tabular}\n", encoding="utf-8")
+    (deck / "refs.bib").write_text("@article{luque2026, author={Luque, R. and Standing, M.}, title={Radial Velocity}, "
+                                   "journal={arXiv}, year={2026}}\n", encoding="utf-8")
+    png(deck / "figures" / "grafico.png", (0.2, 0.4, 0.8))
+    png(deck / "logos" / "logo.png", (0.9, 0.4, 0.1))
+    (deck / "figures" / "nao-usada.png").write_bytes((deck / "figures" / "grafico.png").read_bytes())
+    open_studio(page, studio)  # its deck changed: it compiles on open
+    compiled(page)
+    bar = page.locator(".beamer-bar")
+    bar.get_by_role("button", name="Exportar para o Overleaf").click()
+    expect(bar.locator(".beamer-export")).to_have_text(
+        "exports/apresentacao-overleaf.zip: 7 arquivos; uma cópia compilou sozinha, sem nenhum [?].", timeout=180_000)
+    expect(bar.get_by_role("button", name="Abrir pasta")).to_be_visible()  # opens Explorer: not clicked here
+    with zipfile.ZipFile(studio.kit / "exports" / "apresentacao-overleaf.zip") as z:
+        assert sorted(z.namelist()) == ["apresentacao.pdf", "apresentacao.tex", "figures/grafico.png", "latexmkrc",
+                                        "logos/logo.png", "refs.bib", "tables.tex"]
+        zipped_pdf = z.read("apresentacao.pdf")
+    # the PDF that goes with it is the last compile's, the one Abrir PDF opens
+    href = bar.get_by_role("link", name="Abrir PDF").get_attribute("href")
+    assert zipped_pdf == api.get(studio.base + href, headers=studio.headers).body()
 
 
 def test_an_agent_edit_to_the_tex_recompiles_the_deck_while_its_turn_still_runs(studio, page):
