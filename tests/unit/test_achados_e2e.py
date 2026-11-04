@@ -38,7 +38,7 @@ def test_every_message_to_the_author_is_in_portuguese():
     assert "Write every message to the author in Brazilian Portuguese" in text
     assert "short notes between tool calls" in text
     claude = (PROJECT / "CLAUDE.md").read_text(encoding="utf-8")
-    assert "Every message to the author is in Brazilian Portuguese" in claude
+    assert "Write every message to the author in the language the author writes in" in claude  # the app asks for pt-BR (prompt.py)
 
 
 def test_a_text_edit_can_go_after_an_inline_formula():
