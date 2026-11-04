@@ -7,6 +7,13 @@ description: Cria a apresentação inteira a partir dos materiais deste projeto 
 
 Esta skill reproduz o método do kit da defesa NEXUS-GO. O deck nasce de uma especificação em `docs/`, não direto em HTML. Siga as fases na ordem. As regras visuais e de texto estão em [ESTILO.md](ESTILO.md), e os padrões de slide em [exemplos/](exemplos/), um arquivo por tipo.
 
+Seis skills do projeto trazem as decisões que deram certo no deck do kit, e você as lê na fase indicada (com a ferramenta Read, em `.claude/skills/<nome>/SKILL.md`):
+- `deck-leituras-de-resultado` e `deck-componentes-interativos`: na storyline (fase C) e nos slides (fase D);
+- `deck-pt-br`: nos slides (fase D), quando os slides são em português;
+- `deck-roteiro-de-fala`: no roteiro de narração (fase F);
+- `deck-checklist-de-entrega`: antes do resumo (fase G);
+- `deck-rodada-de-ajustes`: no resumo (o formato do relatório) e em toda correção que o autor mandar depois.
+
 O autor fala com você em português. Escreva toda mensagem a ele em português do Brasil, curto, inclusive as notas curtas entre as ferramentas, mesmo quando a fonte está em inglês.
 
 ## A. Briefing: uma mensagem, e espere
@@ -42,6 +49,8 @@ O autor fala com você em português. Escreva toda mensagem a ele em português 
 
 ## C. Storyline, e a parada para o autor
 
+Leia antes `deck-leituras-de-resultado` e `deck-componentes-interativos`.
+
 1. Escreva `docs/STORYLINE.md` a partir de `docs/STORYLINE.template.md`, slide a slide, com estes campos:
    - um id estável (`s01`, `s02`... e `b1` para os de reserva);
    - o título afirmativo;
@@ -74,6 +83,8 @@ O autor fala com você em português. Escreva toda mensagem a ele em português 
 
 ## D. Slides, parte por parte
 
+Com os slides em português, leia antes `deck-pt-br`.
+
 1. Para cada slide da storyline:
    - abra o exemplo do tipo dele em `exemplos/`;
    - copie a estrutura e as classes;
@@ -101,9 +112,11 @@ O autor fala com você em português. Escreva toda mensagem a ele em português 
 ## F. Opcionais do briefing
 
 - **Beamer no formato dos colegas:** `beamer/apresentacao/apresentacao.tex` já é o modelo deles (tema Madrid, barra de título azul-marinho, rodapé em três azuis, legendas numeradas). Escreva nele os mesmos slides da storyline, um `frame` por slide, com `\section` por parte. Compile com `mcp__deck__compile_beamer` até 0 erros e nenhum Overfull.
-- **Roteiro de narração** (`roteiro.md`, só texto): um `## s07 · Título` por slide, e um parágrafo `[0]`, `[1]`... por estado de passo, com o que dizer quando o slide aparece e a cada clique. Todo número vem de `docs/FACTS.md`. Mire em cerca de 130 palavras por minuto da duração do briefing.
+- **Roteiro de narração** (`roteiro.md`, só texto; leia antes `deck-roteiro-de-fala`): um `## s07 · Título` por slide, e um parágrafo `[0]`, `[1]`... por estado de passo, com o que dizer quando o slide aparece e a cada clique. Todo número vem de `docs/FACTS.md`. Mire em cerca de 130 palavras por minuto da duração do briefing.
 
 ## G. Resumo
+
+Antes, passe pela `deck-checklist-de-entrega`. O resumo segue o formato de relatório da `deck-rodada-de-ajustes` (regra 15).
 
 Termine com um resumo curto, em português:
 - quantos slides e partes;

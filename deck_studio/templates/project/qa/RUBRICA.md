@@ -48,6 +48,19 @@ Cada slide leva uma nota de 0 a 3 em cada critério. Um item é **BLOQUEANTE** q
 - **Storyline:** os slides são os da `docs/STORYLINE.md`, na mesma ordem.
 - **Figuras:** as de `docs/FIGURES.md` aparecem, e a licença está nas referências.
 
+## Critérios das skills do projeto
+
+As skills em `.claude/skills/deck-*` trazem as regras que os revisores do kit pegaram. Estes itens são **BLOQUEANTES**:
+- **Leitura falsa noutra coluna:** uma leitura (callout) vale numa métrica e é falsa noutra coluna do mesmo slide, ou diz "melhor" ou "empate" contra os limiares do próprio deck (`deck-leituras-de-resultado`, regras 6 e 8).
+- **Marcação do melhor valor errada:** o sentido da métrica foi ignorado, ou só o primeiro dos empatados recebeu a marca (`deck-leituras-de-resultado`, regra 2).
+- **Forma do gráfico contra o dado:** barras truncadas, ou um donut para escores que não somam 1 (`deck-leituras-de-resultado`, regra 10).
+- **Afirmação qualitativa ou conta derivada errada:** "diminui", "monotônico" ou a margem a − b não batem com a série da fonte (`deck-checklist-de-entrega`, regras 2 e 3).
+- **Placeholder com cara de conteúdo**, ou o apresentador, a data e a instituição tirados do PDF quando quem apresenta pode ser outra pessoa (`deck-checklist-de-entrega`, regra 11; `deck-rodada-de-ajustes`, regra 3).
+  - Um campo que só o autor sabe, deixado entre colchetes e listado no resumo, **não** é bloqueante: vai em "Precisa de você".
+- **Separador decimal errado no português**, em qualquer lugar, inclusive gráficos, tooltips e tabelas (`deck-pt-br`, regra 1).
+- **Termo em inglês sem itálico** no texto em português, quando o briefing pede o itálico (`deck-pt-br`, regra 3).
+- **Componente que mostra só o resultado** num slide de mecanismo, quando o processo podia ser mostrado passo a passo (`deck-componentes-interativos`, regra 1).
+
 ## Formato da resposta
 
 ```
