@@ -293,15 +293,21 @@ OUTSIDE = """() => {  // each element of each slide, at its last step, that leav
 }"""
 
 
-def test_every_pattern_of_padroes_html_fits_its_slide_a_long_title_included(project, page):
-    """The agent copies each slide from a pattern of padroes.html, and a title comes from the PDF as it is."""
-    patterns = read(project / ".claude/skills/criar-apresentacao/padroes.html")
-    assert max(len(text) for tag, text in Texts(patterns).texts if tag == "h2") >= 117  # an article's long title
+def test_every_example_slide_fits_its_slide_an_articles_long_title_included(project, page):
+    """The agent copies each slide from an example of exemplos/ (one per type, from the NEXUS-GO kit), and an
+    article's full title, as the PDF has it, goes in the title slide's subtitle."""
+    examples = sorted((project / ".claude/skills/criar-apresentacao/exemplos").glob("*.html"))
+    assert len(examples) == 12
+    patterns = "\n".join(read(f) for f in examples)
+    long_title = ("Network-Extended Unified Sequence Embeddings for Gene Ontology Function Annotation in Large Protein "
+                  "Interaction Graphs")
+    assert len(long_title) >= 117
+    patterns = patterns.replace("[Título completo do trabalho, como a fonte o escreve]", long_title)
     (project / SLIDES / "00-title.html").unlink()
     write(project / SLIDES / "01-padroes.html", patterns)
     figure = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 1200, 800), False)
     figure.clear_with(200)
-    (project / "deck/src/img/figura.png").write_bytes(figure.tobytes("png"))
+    (project / "deck/src/img/exemplo-figura.png").write_bytes(figure.tobytes("png"))
     built(project)
 
     html = read(project / "deck/dist/deck.html")

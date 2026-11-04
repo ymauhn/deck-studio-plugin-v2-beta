@@ -128,7 +128,9 @@ def generic_config(kit, fmt="html"):
         # the shell's scripts run in the studio deck, and the studio runs the build and the job tools; Claude Code
         # reads a CLAUDE.md, or a .claude folder below the project's own, in any folder it works in as instructions
         "askWrite": ["deck/src/*.js", "deck/src/*.mjs", "deck/src/*.cjs", "deck/src/shell.html", "deck/build.py",
-                     "deck/tools/**", "tools/**", "CLAUDE.md", "**/CLAUDE.md", "*/.claude/*", "qa/*.py"],
+                     "deck/tools/**", "tools/**", "CLAUDE.md", "**/CLAUDE.md", "*/.claude/*", "qa/*.py",
+                     # the judge checks the agent: its prompt and rubric change only with the author
+                     ".claude/agents/**", "qa/RUBRICA.md"],
         "localScripts": ["deck/build.py", "deck/tools/export_pdf.py", "tools/overleaf_zip.py", "qa/check_deck.py",
                          "qa/audit_numbers.py", "qa/shoot.py"],
         "askWriteDirs": [user_skills],
