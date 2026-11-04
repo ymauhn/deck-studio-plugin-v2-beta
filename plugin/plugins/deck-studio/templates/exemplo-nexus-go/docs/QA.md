@@ -11,7 +11,7 @@ suite after every major change and before finishing. Record results in `qa/REPOR
 2. Diff it with the kit's copy. Any changed number: update `FACTS.md` and the storyline, and
    log it in `DECISIONS.md`.
 3. Recompute figure/table/equation numbering (`data/numbering.json`) and fix slide sources.
-4. Open the repository clone (`source/nexus-go/`) and compare its consolidated result tables
+4. Clone the public repository (https://github.com/ymauhn/nexus-go) into `source/nexus-go/` and compare its consolidated result tables
    (look in `results/`, e.g. CSV tables of all runs, ensemble logs) with the dissertation's
    tables for: the late-fusion AVG values, the test-set rows of the three confrontation
    tables, and the cost table. Report agreements and disagreements. The dissertation is the

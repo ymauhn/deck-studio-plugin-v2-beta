@@ -23,3 +23,5 @@ dissertação, o sistema visual, a especificação de cada animação e o plano 
 
 Quando ele terminar, o arquivo principal será `deck/dist/nexus-go-defense.html`. Se quiser
 publicá-lo como artefato no claude.ai, traga esse arquivo de volta para a conversa no Cowork.
+
+O código da pesquisa NEXUS-GO não vem neste exemplo: ele é público em https://github.com/ymauhn/nexus-go (MIT, com os resultados em CC BY 4.0). Para a conferência opcional dos resultados (`qa/repo_audit.py`, `docs/QA.md`), clone-o em `source/nexus-go/`.

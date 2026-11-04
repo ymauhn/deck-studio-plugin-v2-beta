@@ -8,6 +8,8 @@ dia: o conteúdo completo, com nomes, números e figuras (decisão do dono, 04/1
 - os PDFs, zips e arquivos auxiliares que uma compilação gera;
 - a ferramenta de publicação do Netlify, ligada ao site e à conta do dono;
 - os GIFs (eles vão para o README);
+- o clone do código da pesquisa (source/nexus-go/), público no GitHub: o deck e a auditoria de números usam só a
+  dissertação (source/thesis/) e os dados de data/; o LEIA-ME, o PROMPT e o docs/QA.md apontam para o repositório;
 - as linhas de docs/CONTEXT.md com caminhos desta máquina.
 No fim, lista as linhas que ainda citam um caminho pessoal (para a varredura da etapa 8). Só a biblioteca padrão.
 """
@@ -23,13 +25,15 @@ SKIP_DIRS = {"video", "video-pt", "node_modules", "__pycache__", ".git", "shots"
 AUX = (".aux", ".log", ".nav", ".snm", ".toc", ".out", ".fls", ".fdb_latexmk", ".synctex.gz", ".bbl", ".blg", ".vrb",
        ".xdv", ".bcf", ".run.xml", ".zip")
 SKIP_FILES = {"netlify-site.json", "publish_netlify.ps1"}
-PERSONAL = re.compile(r"[A-Za-z]:[\\/]+Users[\\/]+(?!voce\b)\w+|/c/Users/(?!voce\b)\w+|OneDrive[\\/]", re.I)
+PERSONAL = re.compile(r"[A-Za-z]:[\\/]+Users[\\/]+(?!voce\b)\w+|/c/Users/(?!voce\b)\w+|OneDrive[\\/]|/home/(?!voce)\w+", re.I)
 USER = re.compile(r"([A-Za-z]:[\\/]+Users[\\/]+|/c/Users/)(?!voce\b)\w+")  # a user folder in an example path
 TEXT = {".md", ".tex", ".html", ".js", ".mjs", ".css", ".json", ".py", ".txt", ".bib", ".cls", ".sty", ".ps1", ".cmd"}
 
 
 def kept(kit, p):
     rel = p.relative_to(kit)
+    if rel.parts[:2] == ("source", "nexus-go"):  # the research code: public on its own (github.com/ymauhn/nexus-go)
+        return False
     if rel.parts[:3] == ("deck", "build", "svg"):  # the TikZ figures, rendered: the build reuses them without TeX
         return True
     if SKIP_DIRS & set(rel.parts[:-1]) or any(".backup-" in part for part in rel.parts):
@@ -59,6 +63,23 @@ def main(kit):
     if context.is_file():  # the table of this machine's folders goes; the rest of the page stays
         lines = context.read_text(encoding="utf-8").split("\n")
         context.write_text("\n".join(ln for ln in lines if not PERSONAL.search(ln)), encoding="utf-8")
+    # the research code: a link instead of the copy
+    repo = "https://github.com/ymauhn/nexus-go"
+    for rel, old, new in [
+            ("PROMPT.md", "Find or clone the repository `github.com/ymauhn/nexus-go` into\n`source/nexus-go/`",
+             f"Clone the repository {repo} (public) into\n`source/nexus-go/`"),
+            ("docs/QA.md", "Open the repository clone (`source/nexus-go/`)",
+             f"Clone the public repository ({repo}) into `source/nexus-go/`")]:
+        f = OUT / rel
+        text = f.read_text(encoding="utf-8").replace("\r\n", "\n")
+        if old in text:
+            f.write_text(text.replace(old, new), encoding="utf-8")
+        else:
+            print(f"aviso: {rel} não tem o trecho do repositório; confira à mão")
+    leia = OUT / "LEIA-ME.md"
+    leia.write_text(leia.read_text(encoding="utf-8").rstrip() + "\n\nO código da pesquisa NEXUS-GO não vem neste exemplo: "
+                    f"ele é público em {repo} (MIT, com os resultados em CC BY 4.0). Para a conferência opcional dos "
+                    "resultados (`qa/repo_audit.py`, `docs/QA.md`), clone-o em `source/nexus-go/`.\n", encoding="utf-8")
     for p in OUT.rglob("*"):  # what is left of this machine's user folder, in prose: the example user
         if p.is_file() and p.suffix.lower() in TEXT and p != context:
             text = p.read_text(encoding="utf-8", errors="surrogateescape")

@@ -38,7 +38,7 @@ all of it together. Install the skills listed in `docs/SKILLS.md` if they are no
 
 **Phase 1. Sources.** Locate the newest dissertation (see `docs/CONTEXT.md` §2; search the
 machine for anything newer than the `ultimo_ajuste` zip). Copy and unzip it into
-`source/thesis/`. Find or clone the repository `github.com/ymauhn/nexus-go` into
+`source/thesis/`. Clone the repository https://github.com/ymauhn/nexus-go (public) into
 `source/nexus-go/` (read-only; pull the latest only if the clone has no local changes).
 Regenerate `data/thesis_tables.json` and `data/numbering.json` with the scripts in `tools/`,
 diff them against the shipped copies, and update `docs/FACTS.md` and `docs/STORYLINE.md` for
