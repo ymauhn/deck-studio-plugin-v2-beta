@@ -126,7 +126,9 @@ class Guard:
     def write_path(self, tool_name, tool_input):
         """The normalized file a write tool call targets; None for other tools or a missing path."""
         key = WRITE_TOOLS.get(tool_name)
-        return self._target(tool_input.get(key)) if key and isinstance(tool_input, dict) else None
+        target = self._target(tool_input.get(key)) if key and isinstance(tool_input, dict) else None
+        # the rules compare Windows-style strings; the path a caller opens is the system's own (\tmp\x is /tmp/x)
+        return target if target is None or sys.platform == "win32" else target.replace("\\", "/")
 
     def _target(self, p):
         return _norm(self.root, p) if isinstance(p, str) and p else None
