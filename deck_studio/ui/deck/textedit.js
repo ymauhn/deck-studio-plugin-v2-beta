@@ -123,6 +123,12 @@ function edit(node, { end = false } = {}) {
       editBoxEnd(box);
       return;
     }
+    // End goes to the end of the text, not of the visual line: in a box that wraps, the native End stopped mid-sentence
+    if (e.key === 'End' && !e.shiftKey && open) {
+      e.preventDefault();
+      getSelection().selectAllChildren(span);
+      getSelection().collapseToEnd();
+    }
     if (e.key === 'Enter' && !e.isComposing && open) {
       e.preventDefault();
       save();
