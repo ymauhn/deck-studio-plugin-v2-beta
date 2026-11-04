@@ -1,0 +1,11 @@
+{
+  "name": "ymauhn-deck",
+  "owner": {"name": "ymauhn"},
+  "plugins": [
+    {
+      "name": "deck-studio",
+      "source": "./plugins/deck-studio",
+      "description": "Apresentações a partir de artigos, com QA e juiz."
+    }
+  ]
+}
