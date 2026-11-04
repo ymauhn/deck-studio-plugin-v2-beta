@@ -63,7 +63,8 @@ async def run_job(state, job_id, name, commands):
         for argv in commands:
             await say(state="running", line="> " + subprocess.list2cmdline(argv))
             # the clean build writes deck/build as the studio builds do: it takes their turn, never runs beside one
-            async with state.builder.lock if argv == state.config.get("cleanBuild") else contextlib.nullcontext():
+            clean = argv == state.config.get("cleanBuild") or argv in state.config.get("otherCleanBuilds", [])
+            async with state.builder.lock if clean else contextlib.nullcontext():
                 code = await run_lines(state, argv, lambda line: say(state="running", line=line))
             if code != 0:  # the commands after a failed one never run
                 await say(state="running", line=f"O comando saiu com o código {code}.")

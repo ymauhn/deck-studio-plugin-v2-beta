@@ -34,8 +34,13 @@ SCENARIOS = ROOT / "tests" / "fixtures" / "scenarios"
 def safe_jobs(kit):
     """Every job of the kit's adapter (NEXUS-GO's, or a project's generic one) as a harmless stand-in: an e2e studio
     never exports with the kit's tools or publishes."""
-    return {"jobs": {name: [[sys.executable, "-c", f"print('stand-in for the {name} job')"]]
-                     for name in load_config(kit)["jobs"]}}
+    config = load_config(kit)
+    stand_in = lambda jobs, tag="": {name: [[sys.executable, "-c", f"print('stand-in for the {name} job{tag}')"]]  # noqa: E731
+                                     for name in jobs}
+    # a language tree (NEXUS-GO's deck/src-pt) brings jobs of its own: stand-ins too
+    return {"jobs": stand_in(config["jobs"]),
+            "languageTrees": {lang: {"jobs": stand_in(tree.get("jobs", {}), f" ({lang})")}
+                              for lang, tree in config.get("languageTrees", {}).items()}}
 
 
 SAFE_JOBS = safe_jobs(ROOT)  # NEXUS-GO's jobs
