@@ -16,6 +16,7 @@ from pathlib import Path
 from claude_agent_sdk import (AssistantMessage, RateLimitEvent, ResultMessage, StreamEvent, SystemMessage, TextBlock,
                               ToolResultBlock, ToolUseBlock, UserMessage)
 
+from deck_studio.agent import judge
 from deck_studio.agent.prompt import user_content
 from deck_studio.agent.sdk import SHELL_TOOLS, make_client
 from deck_studio.core.write_guard import DEFAULT_LEVEL, WRITE_TOOLS
@@ -224,6 +225,10 @@ class ChatSession:
             await self.on_event({"kind": "usage", **{k: (windows.get(k) or {}).get("utilization")
                                                      for k in ("five_hour", "seven_day")}})
         elif isinstance(m, ResultMessage):
+            try:  # what the turn cost, for the measurements of the generator (data dir's costs.jsonl)
+                judge.log_cost(self.state, "turn", m, {"chat": self.chat_id, "turn": turn_id, "model": self.model})
+            except OSError:
+                pass
             self.resume = m.session_id  # a reconnect (new effort) continues this conversation
             await self.on_event({"kind": "session", "sessionId": m.session_id})
             await self.on_event({"kind": "result", "turnId": turn_id, "subtype": m.subtype, "isError": m.is_error})
