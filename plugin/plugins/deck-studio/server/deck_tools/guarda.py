@@ -43,7 +43,7 @@ def main():
         out = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
                                       "permissionDecisionReason": f"Deck Studio: a guarda falhou ({e})"}}
     if out:
-        print(json.dumps(out, ensure_ascii=False))
+        print(json.dumps(out))  # ASCII: Claude Code reads UTF-8, a Windows console writes its code page
 
 
 if __name__ == "__main__":
