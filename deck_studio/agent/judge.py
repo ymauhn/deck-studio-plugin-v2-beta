@@ -11,6 +11,7 @@ import re
 import time
 from pathlib import Path
 
+from deck_studio.agent.sdk import MAX_LINE
 from claude_agent_sdk import (AssistantMessage, ClaudeAgentOptions, PermissionResultAllow, PermissionResultDeny,
                               ResultMessage, TextBlock, query)
 
@@ -58,6 +59,9 @@ async def judge(state, focus=""):
             disallowed_tools=["Bash", "PowerShell", "Write", "Edit", "MultiEdit", "NotebookEdit", "WebFetch",
                               "WebSearch", "Task", "Agent", "TodoWrite"],
             can_use_tool=can_use_tool, setting_sources=[], max_turns=40,
+            # the judge reads the contact sheet and the slide images: one stream-json line holds a whole image, over the
+            # SDK default of 1 MiB (the first acceptance run failed three times on it, 04/11)
+            max_buffer_size=MAX_LINE,
             env={"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1", "ENABLE_CLAUDEAI_MCP_SERVERS": "false"})
         texts, result = [], None
 
