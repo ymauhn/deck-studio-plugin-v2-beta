@@ -78,5 +78,8 @@ def test_end_goes_to_the_end_of_a_box_that_wraps_not_of_its_first_line(project, 
     page.keyboard.press("Enter")
     # the previous test's card is also there (cards come back after a reload): wait for this edit in the file itself
     file = project.kit / "deck/src/slides/01-formula.html"
-    wait_until(lambda: "quebra em várias linhas (editado)</li>" in file.read_text(encoding="utf-8"), timeout=20,
-               message="the edit at the end of the box")
+    try:
+        wait_until(lambda: "quebra em várias linhas (editado)</li>" in file.read_text(encoding="utf-8"), timeout=20,
+                   message="the edit at the end of the box")
+    except AssertionError:
+        raise AssertionError(f"the box's line in the file: {[ln for ln in file.read_text(encoding='utf-8').splitlines() if 'Mede o' in ln]}") from None
