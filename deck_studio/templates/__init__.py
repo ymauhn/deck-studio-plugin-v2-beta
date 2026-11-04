@@ -5,6 +5,8 @@ import unicodedata
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent / "project"
+# empty folders of the template, which git does not keep: made in every new project all the same
+EMPTY_DIRS = ("deck/src/img", "beamer/apresentacao/figures")
 PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
 TEX = {"\\": r"\textbackslash{}", "{": r"\{", "}": r"\}", "$": r"\$", "&": r"\&", "#": r"\#", "_": r"\_",
        "%": r"\%", "^": r"\textasciicircum{}", "~": r"\textasciitilde{}"}
@@ -87,6 +89,8 @@ def fill_template(dest, values):
     if missing:
         raise ValueError(f"no value for {', '.join(sorted(missing))}")
     dest.mkdir(parents=True, exist_ok=True)
+    for d in EMPTY_DIRS:
+        (dest / d).mkdir(parents=True, exist_ok=True)
     for rel, data in files.items():
         if data is None:
             (dest / rel).mkdir(parents=True, exist_ok=True)

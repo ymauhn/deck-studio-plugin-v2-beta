@@ -26,6 +26,10 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **HTML | Beamer:** troca para a versão Beamer.
   - Na versão acadêmica (`beamer/academico`), um clique num frame mostra a fonte LaTeX dele.
   - Para salvar a fonte, use Ctrl+S: o frame recompila.
+- **Idioma (EN | PT):** alterna o deck entre a versão em inglês e a em português.
+  - **Traduzir para …** pede ao agente, no chat, a cópia no outro idioma, em `deck/src/i18n/<idioma>/`. É um pedido como os outros, com **Ver diff** e **Desfazer**.
+  - A versão na tela é a que o build, **Exportar PDF** e **Publicar** usam. Cada idioma guarda uma cópia em `deck/src/i18n/<idioma>/`.
+  - Não dá para trocar o idioma durante um pedido. O **Desfazer** de um pedido antigo só funciona com o deck de volta no idioma daquele pedido.
 
 ### Chat
 
@@ -35,8 +39,14 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **Parar** interrompe o pedido em andamento.
 - **Abas:** cada aba é uma conversa separada, que continua depois de fechar o app. **Novo chat** abre outra, e F2 renomeia a aba.
 - **Modelo:** Opus é o padrão; Sonnet e Haiku também estão disponíveis.
-- **Configurações:** o modelo e as skills dos chats novos.
-- **Aprovações:** comandos de terminal, acesso à web, scripts do deck e arquivos fora do deck esperam o seu **Permitir** ou **Negar**. O cartão mostra o pedido inteiro, com todas as linhas.
+- **Esforço:** ao lado do modelo, de baixo a máximo, ou o padrão do modelo. Vale por chat; trocar no meio da conversa reconecta o agente no próximo pedido, na mesma conversa.
+- **Configurações:** o modelo, o esforço e as skills dos chats novos.
+- **Autonomia:** a chave acima da caixa de mensagem vale para todos os chats, a partir da próxima ação do agente.
+  - **Perguntar sempre:** toda escrita, comando e acesso à web espera o seu **Permitir**.
+  - **Editar o deck** (o padrão): edita os arquivos do deck sem perguntar. Comandos, web e os scripts do deck pedem aprovação.
+  - **Autônomo:** também roda comandos locais, lê fora do deck e consulta a web sem perguntar.
+  - **Em qualquer nível:** a escrita fora do deck continua barrada, a dissertação e os arquivos gerados continuam protegidos, e os scripts do deck pedem aprovação. Um comando que publica, usa a rede ou sai da pasta do deck também pede.
+- **Aprovações:** o que o nível de autonomia não libera espera o seu **Permitir** ou **Negar**. O cartão mostra o pedido inteiro, com todas as linhas.
 - **Erros:** se o agente parar no meio de um pedido, o chat diz o que houve e o que fazer, em geral mandar a mensagem de novo. O texto técnico fica dobrado em **Detalhe técnico**, e uma ferramenta que ficou sem resposta aparece em cinza, com "sem resultado".
 
 ### Arquivos
@@ -76,8 +86,8 @@ Depois:
 
 ## O que o agente pode e não pode fazer
 
-- **Livre:** editar os slides, o CSS, as imagens, `context/`, as skills do projeto e a versão acadêmica do Beamer.
-- **Com a sua aprovação:** comandos de terminal, a web, o código do deck (`deck/src/**/*.js` e `shell.html`) e arquivos fora do kit.
+- **Livre:** editar os slides, o CSS, as imagens, `context/`, as skills do projeto e a versão acadêmica do Beamer; no nível **Editar o deck** (o padrão), também os outros arquivos do deck que não são protegidos.
+- **Com a sua aprovação:** o código do deck (`deck/src/**/*.js` e `shell.html`) e os arquivos fora do kit, em qualquer nível. Comandos de terminal e a web pedem aprovação, salvo os comandos locais e a consulta à web no nível **Autônomo**.
 - **Nunca:** a dissertação (`source/`), `data/` e os arquivos gerados (`deck/dist`, `deck/build`, `beamer/slides.tex`).
 - **Scripts nos slides:** o deck aparece no app com uma política que bloqueia qualquer script escrito num slide. Assim, nada que o agente escreva num slide consegue aprovar pedidos nem publicar.
 - **Desfazer:** cobre todas as mudanças feitas por arquivo, mas não o que um comando de terminal mudar.
