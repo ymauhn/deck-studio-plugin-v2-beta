@@ -27,7 +27,7 @@ from deck_studio.server.api import ApiError, json_body
 router = APIRouter()
 LANGUAGES = {"en": "Inglês", "pt": "Português"}
 NAMES = {"en": "English", "pt": "Brazilian Portuguese"}
-TREE_KEYS = ("slidesDir", "studioBuild", "partBuild", "cleanBuild", "otherCleanBuilds", "jobs", "jobOutputs")
+TREE_KEYS = ("slidesDir", "imagesDir", "studioBuild", "partBuild", "cleanBuild", "otherCleanBuilds", "jobs", "jobOutputs")
 
 
 def _base_config(state):
@@ -163,6 +163,8 @@ async def switch(request: Request):
         raise ApiError(400, "missing", f"Ainda não há a versão em {LANGUAGES[lang].lower()}. Gere a tradução primeiro.")
     if state.turn_lock.locked():
         raise ApiError(409, "busy", "Espere o pedido em andamento terminar para trocar o idioma.")
+    if state.extras.get("jobs"):  # an export or a publish of the language on screen is running
+        raise ApiError(409, "job", "Espere a tarefa em andamento terminar para trocar o idioma.")
     async with state.turn_lock:
         await state.publish_status()
         await state.builder.wait()  # no build of the other language still running
