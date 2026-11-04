@@ -97,7 +97,14 @@ Cada etapa é um ticket próprio, com branch e PR. As referências de código ab
 
 Ele mantém o build dele: `node deck/build.mjs`, com o esbuild, e por isso o manual pede o Node. A auditoria `qa/run_all.py` roda contra `source/thesis/dissertation.tex`.
 
-**Tamanho:** em medição. A leitura do kit no OneDrive passou de 2 min e foi para segundo plano; o número entra no PR da etapa. Se passar de algumas dezenas de MB, as figuras grandes vão como release asset, baixadas pelo `verificar`.
+**Tamanho, medido em 04/11 com o `du`:**
+- o kit tem 5,8 GB;
+- `video/` tem 5,3 GB e `video-pt/` 197 MB: saem, segundo a seção d;
+- `beamer/` tem 123 MB, com PDFs gerados que saem;
+- `qa/` tem 101 MB, com as capturas que o QA refaz e que saem;
+- `deck/` tem 82 MB, dos quais 59 MB são de `node_modules`, que sai e volta com `npm ci`;
+- `gifs/` tem 15 MB e `source/` 8,3 MB.
+O tamanho final do template, depois dos cortes, fica em medição e entra no PR da etapa. Se passar de algumas dezenas de MB, as figuras grandes vão como release asset, baixadas pelo `verificar`.
 
 **Teste:** no CI, o exemplo builda (Node) e o `run_all.py` dele passa. Os testes que só valem na máquina do dono ficam marcados.
 
