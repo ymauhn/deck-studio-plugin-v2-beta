@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "approval": "Bash", "input": { "command": "powershell -NoProfile -File deck/tools/publish_netlify.ps1", "description": "Publish" } },
+    { "say": "Resultado: {{result}}" }
+  ]
+}

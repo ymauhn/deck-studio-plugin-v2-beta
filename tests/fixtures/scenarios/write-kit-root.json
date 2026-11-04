@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "tool": "Write", "input": { "file_path": "notas-da-defesa.md", "content": "nota\n" } },
+    { "say": "Escrevi a nota." }
+  ]
+}

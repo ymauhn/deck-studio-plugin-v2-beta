@@ -18,8 +18,8 @@ from claude_agent_sdk import (AssistantMessage, RateLimitEvent, ResultMessage, S
 
 from deck_studio.agent.prompt import user_content
 from deck_studio.agent.sdk import SHELL_TOOLS, make_client
-from deck_studio.core.write_guard import WRITE_TOOLS
-from deck_studio.features import approvals
+from deck_studio.core.write_guard import DEFAULT_LEVEL, WRITE_TOOLS
+from deck_studio.features import approvals, language
 from deck_studio.render import Renderer
 
 IMAGES = 4  # ponytail: images of a selection's first 4 slides; the agent takes screenshots of the others itself
@@ -60,10 +60,12 @@ def _text(content):
 
 
 class ChatSession:
-    def __init__(self, state, chat_id, model, on_event, resume=None):
+    def __init__(self, state, chat_id, model, on_event, resume=None, effort=""):
         self.state = state
         self.chat_id = chat_id
         self.model = model  # changes apply from the next turn on
+        self.effort = effort  # "" is the model's default; a change reconnects on the next turn, resuming
+        self._client_effort = effort
         self.resume = resume  # the SDK session id this chat continues, if any
         self.on_event = on_event
         self.closed = False
@@ -87,6 +89,10 @@ class ChatSession:
 
     async def close(self):
         self.closed = True
+        await self._disconnect()
+
+    async def _disconnect(self):
+        """Disconnect the client, if any; the next turn connects a new one."""
         if self.client:
             process = getattr(getattr(self.client, "_transport", None), "_process", None)  # the CLI's; the fake has none
             try:
@@ -98,17 +104,21 @@ class ChatSession:
             # ponytail: SDK 0.2.174 and anyio internals; drop this when the SDK's own close() closes stdout
             with contextlib.suppress(AttributeError):
                 process._process._transport.close()
+            self.client = None
 
     async def _turn(self, turn_id, text, selection):
         self.turn_id = turn_id
         try:
             self.state.history.begin(turn_id, {"chatId": self.chat_id, "text": text})
+            if self.client is not None and self._client_effort != self.effort:  # effort is fixed at connect
+                await self._disconnect()
             if self.client is None:
                 await self._connect(turn_id)
             if self._client_model != self.model:
                 await self.client.set_model(self.model)
                 self._client_model = self.model
-            await self.client.query(self._message(text, selection, await self._images(selection)))
+            await self.client.query(self._message(text + language.note(self.state), selection,
+                                                  await self._images(selection)))
             result = None
             async for m in self.client.receive_response():
                 result = await self._handle(turn_id, m)
@@ -131,6 +141,7 @@ class ChatSession:
     async def _connect(self, turn_id):
         """Connect a new client. When the chat's SDK session cannot be resumed (the CLI sweeps old transcripts), a
         new session takes over, and the chat says that the old context is gone."""
+        self._client_effort = self.effort
         self.client = make_client(self.state, self.model, self)
         try:
             await self.client.connect()
@@ -213,6 +224,7 @@ class ChatSession:
             await self.on_event({"kind": "usage", **{k: (windows.get(k) or {}).get("utilization")
                                                      for k in ("five_hour", "seven_day")}})
         elif isinstance(m, ResultMessage):
+            self.resume = m.session_id  # a reconnect (new effort) continues this conversation
             await self.on_event({"kind": "session", "sessionId": m.session_id})
             await self.on_event({"kind": "result", "turnId": turn_id, "subtype": m.subtype, "isError": m.is_error})
             if m.terminal_reason in ("aborted_streaming", "aborted_tools"):  # interrupt()
@@ -268,7 +280,7 @@ class ChatSession:
     async def _permission(self, name, tool_input):
         """(behavior, reason): the write guard decides and the author decides its asks; an allowed write gets its
         history snapshot first."""
-        d = self.state.guard.check(name, tool_input)
+        d = self.state.guard.check(name, tool_input, self.state.settings.get("autonomy", DEFAULT_LEVEL))
         behavior, reason = d.behavior, d.reason
         if behavior == "ask":
             answer = await approvals.ask(self.state, self.chat_id, self.turn_id, name,
