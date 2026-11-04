@@ -13,7 +13,8 @@ from tests.helpers.kit_copy import PREFIX, remove_kit_copy
 
 FORMULA = """<section class="slide" id="s02" data-part="Método">
 <h2 class="title">Só a massa mínima</h2>
-<div class="bd"><ul class="b col-w"><li>Só se mede <i>M</i><sub>p</sub> sin <i>i</i></li></ul></div>
+<div class="bd"><ul class="b col-w"><li>Só se mede <i>M</i><sub>p</sub> sin <i>i</i></li>
+<li>Mede o período, a excentricidade e a semiamplitude da órbita da estrela em torno do centro de massa do sistema, numa frase que quebra em várias linhas</li></ul></div>
 <aside class="notes"><p>Teste. (p. 1)</p></aside>
 </section>
 """
@@ -60,3 +61,21 @@ def test_end_goes_after_the_inline_formula(project, page, api):
     expect(page.get_by_role("article").filter(has_text="Texto editado em")).to_be_visible(timeout=20_000)
     source = (project.kit / "deck/src/slides/01-formula.html").read_text(encoding="utf-8")
     assert "<li>Só se mede <i>M</i><sub>p</sub> sin <i>i</i> (editado à mão)</li>" in source
+
+
+def test_end_goes_to_the_end_of_a_box_that_wraps_not_of_its_first_line(project, page, api):
+    """The recorded test's take: End stopped at the end of the visual line, and the text went mid-sentence."""
+    open_studio(page, project)
+    built(project, api)
+    go_slide(page, 2)
+    deck = deck_of(page)
+    deck.get_by_text("Mede o período").dblclick(position={"x": 10, "y": 10})
+    editor = deck.locator(".studio-editing")
+    expect(editor).to_be_visible()
+    assert editor.evaluate("e => e.getClientRects().length") > 1  # it wraps
+    editor.press("End")
+    page.keyboard.type(" (editado)")
+    page.keyboard.press("Enter")
+    expect(page.get_by_role("article").filter(has_text="Texto editado em").last).to_be_visible(timeout=20_000)
+    source = (project.kit / "deck/src/slides/01-formula.html").read_text(encoding="utf-8")
+    assert "quebra em várias linhas (editado)</li>" in source
