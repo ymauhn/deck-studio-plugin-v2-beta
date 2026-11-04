@@ -7,7 +7,7 @@ description: Cria a apresentação inteira a partir dos materiais deste projeto 
 
 Esta skill reproduz o método do kit da defesa NEXUS-GO. O deck nasce de uma especificação em `docs/`, não direto em HTML. Siga as fases na ordem. As regras visuais e de texto estão em [ESTILO.md](ESTILO.md), e os padrões de slide em [exemplos/](exemplos/), um arquivo por tipo.
 
-O autor fala com você em português. Responda em português, curto.
+O autor fala com você em português. Escreva toda mensagem a ele em português do Brasil, curto, inclusive as notas curtas entre as ferramentas, mesmo quando a fonte está em inglês.
 
 ## A. Briefing: uma mensagem, e espere
 

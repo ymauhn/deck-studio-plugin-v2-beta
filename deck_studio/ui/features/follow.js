@@ -88,8 +88,11 @@ export default function follow(studio) {
   }
   studio.deck.frame.addEventListener('load', () => {
     watch();
-    // a reloaded deck: wait for its engine, then show the pending edit
-    const ready = () => (typeof studio.deck.win()?.deck?.steps === 'function' ? apply() : setTimeout(ready, 50));
+    // a reloaded deck (a project made by Deck Studio has no part builds: every edit reloads it): wait for its engine,
+    // then show the pending edit after the studio puts the deck back where it was (its own load listener, registered
+    // by deck.reload() after this one, runs next and would undo the move)
+    const ready = () => (typeof studio.deck.win()?.deck?.steps === 'function' ? setTimeout(apply, 150)
+      : setTimeout(ready, 50));
     ready();
   });
   watch();

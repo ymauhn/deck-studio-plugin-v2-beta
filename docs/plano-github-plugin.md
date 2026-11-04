@@ -1,6 +1,6 @@
 # Plano: abrir o Deck Studio no GitHub como plugin do Claude Code
 
-Data: 04/11/2026. Status: **proposta, espera o dono.** Este documento não muda código, não reescreve histórico e não publica nada. O repositório `ymauhn/deck-studio` continua privado.
+Data: 04/11/2026. Status: **proposta; decisões do dono de 04/11 registradas nas seções d e e.** Este documento não muda código, não reescreve histórico e não publica nada. O repositório `ymauhn/deck-studio` continua privado.
 
 Base: o plano aprovado pelo dono em 04/11 (Fase 2 = plugin do Claude Code distribuído por um marketplace no GitHub; cada colega usa a própria assinatura; o app atual, que roda o Agent SDK na assinatura do dono, **não** é distribuído), a pesquisa `deck-studio-codigo` da mesma rodada, e `docs/LICENCA-PROPOSTA.md` e `RELATORIO-23H.md` do branch `publicacao`.
 
@@ -64,7 +64,7 @@ O README atual é do app pessoal ("Editor local do deck da defesa NEXUS-GO", `RE
 
 1. **O que é** (3 linhas): um plugin do Claude Code que cria e edita apresentações (HTML e Beamer) a partir de um artigo, uma tese ou uma pasta, com QA de números e de layout e um editor visual local.
 2. **Requisitos**: Claude Code instalado e logado **com a sua própria conta** (Pro ou acima, ou chave de API do Console); Python 3.12 via `uv`; Node; Chromium do Playwright; TeX opcional.
-3. **Instalar** (Windows e Mac): os comandos da seção c.
+3. **Instalar** (Windows e Linux): os comandos da seção c.
 4. **Primeiro deck em 5 minutos**: `/deck-studio:criar-apresentacao`, o briefing, o template de exemplo.
 5. **Editor visual**: como abrir, selecionar uma caixa e pedir a mudança no próprio Claude Code.
 6. **Privacidade**: os artigos e os decks ficam no seu computador; o plugin não envia nada a servidor próprio; o que vai para a Anthropic é o que o Claude Code envia na sua sessão, sob os termos da sua conta.
@@ -89,7 +89,7 @@ Leitura para o plano: um plugin instalado pelo colega no Claude Code dele, logad
 
 Documentação conferida em 04/11/2026: code.claude.com/docs/en/plugin-marketplaces ("Create a marketplace"), /plugins/components.md ("Add components to a plugin") e /plugins/host-marketplace.md ("Host and maintain a marketplace").
 
-### Estrutura proposta (repositório novo `ymauhn/deck-studio-plugin`, privado no piloto)
+### Estrutura proposta (repositório novo `ymauhn/deck-studio-plugin`, público)
 
 ```text
 deck-studio-plugin/                  marketplace e plugin no mesmo repositório
@@ -126,7 +126,7 @@ Não há instalador separado: o "instalar" é o do Claude Code mais um passo de 
 2. Na primeira sessão, um hook `SessionStart` roda `uv sync` (cria o venv em `${CLAUDE_PLUGIN_DATA}`) e `uv run playwright install chromium`, só quando o `pyproject.toml` mudou (o padrão `diff -q` da doc).
 3. A skill `/deck-studio:verificar` (ou a ferramenta `diagnostico`) diz o que falta: `uv`, Node, Chromium, TeX, Perl, com o comando de instalação de cada um para o sistema do colega.
 
-Repositório **privado** no piloto: a doc diz que o Claude Code usa as credenciais git que a máquina já tem, sem perguntar. Cada colega precisa de conta no GitHub com convite ao repositório e de `gh auth login` seguido de `gh auth setup-git`; sem chave SSH, `CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1`. Alternativa sem conta GitHub: fonte `archive` (zip por HTTPS com `sha256`), que exige hospedar o zip (fora do escopo sem o sim do dono).
+Repositório **público** (decidido em 04/11, seção d): o colega não precisa de convite nem de conta no GitHub para instalar. A doc diz que o Claude Code clona com o `git` da máquina, sem perguntar; sem chave SSH do GitHub, use `CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1` (a doc recomenda deixar a variável nas instruções, porque a instalação por `/plugin` e as atualizações não caem sozinhas para HTTPS).
 
 ### Manual de instalação
 
@@ -135,39 +135,40 @@ Repositório **privado** no piloto: a doc diz que o Claude Code usa as credencia
 2. Git for Windows (traz o Git Bash e o `perl` que o `latexmk` usa).
 3. `uv`: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`; o `uv` baixa o Python 3.12 sozinho (`requires-python = ">=3.12,<3.13"`, `pyproject.toml:5`).
 4. Node LTS (o build do deck é `node deck/build.mjs`): `winget install OpenJS.NodeJS.LTS`.
-5. GitHub: `winget install GitHub.cli`, `gh auth login`, `gh auth setup-git`.
+5. (Opcional; o repositório é público) GitHub CLI: `winget install GitHub.cli`.
 6. Os dois comandos do plugin acima; abrir uma sessão nova; aceitar o passo de dependências (o download do Chromium: tamanho em medição).
 7. Opcional, Beamer: MiKTeX (instalar pacotes "on the fly": sim) ou TeX Live.
 
-**macOS (Apple Silicon e Intel)**
-1. Claude Code e login com a sua conta.
-2. `xcode-select --install` (git e perl do sistema).
-3. `curl -LsSf https://astral.sh/uv/install.sh | sh`.
-4. Node: `brew install node` (ou o instalador de nodejs.org).
-5. `brew install gh`, `gh auth login`, `gh auth setup-git`.
-6. Os comandos do plugin; sessão nova; dependências.
-7. Opcional: MacTeX ou BasicTeX (`brew install --cask basictex`, depois `sudo tlmgr install latexmk beamer …`; a lista exata de pacotes fica em medição no primeiro Mac).
+**Linux (Ubuntu/Debian)**
+1. Claude Code: instalador oficial (code.claude.com), depois `claude` e entrar com a **sua** conta.
+2. `sudo apt update && sudo apt install -y git perl curl`.
+3. `uv`: o instalador oficial de astral.sh/uv (script `install.sh`, pela linha que a página indica); o `uv` baixa o Python 3.12 sozinho.
+4. Node: `sudo apt install -y nodejs npm` (a versão mínima do Node para o `deck/build.mjs` fica em medição; se a do apt for velha demais, o pacote LTS do NodeSource).
+5. Os comandos do plugin; sessão nova; aceitar o passo de dependências. No Linux, o Chromium do Playwright também precisa das bibliotecas do sistema: `uv run playwright install --with-deps chromium` (pede `sudo`).
+6. Opcional, Beamer: `sudo apt install -y texlive-latex-extra texlive-fonts-recommended latexmk biber` (a lista mínima de pacotes fica em medição no primeiro teste).
+
+O Mac fica fora do piloto (decisão de 04/11: os colegas usam Linux ou Windows).
 
 Teste de fumaça nos dois: `/deck-studio:verificar`, depois criar um deck a partir de um PDF de exemplo CC-BY, `build`, `check`, exportar PDF.
 
-### O que no código só roda no Windows hoje (grep neste worktree, `main` em `fb7bb58`)
+### O que no código só roda no Windows hoje (o porte mira o Linux) (grep neste worktree, `main` em `fb7bb58`)
 
 | Onde | O quê | Conserto proposto |
 |---|---|---|
-| `deck_studio/__main__.py:13,14,19` | `import ctypes`, `import msvcrt`, `from ctypes import wintypes` no topo: o módulo nem importa no Mac (`msvcrt`) | importar dentro de um `if sys.platform == "win32"` |
+| `deck_studio/__main__.py:13,14,19` | `import ctypes`, `import msvcrt`, `from ctypes import wintypes` no topo: o módulo nem importa no Linux (`msvcrt`) | importar dentro de um `if sys.platform == "win32"` |
 | `deck_studio/__main__.py:50-59` | `watch_parent`: `ctypes.WinDLL("kernel32")`, `OpenProcess`, `WaitForSingleObject` | no POSIX, uma *thread* que testa `os.kill(pid, 0)` a cada segundo e sai no `ProcessLookupError` (`# ponytail:` 1 s de atraso, aceitável). No plugin, provavelmente some: não há *studio* filho por projeto |
 | `deck_studio/__main__.py:70,73` | `os.O_BINARY` e `msvcrt.locking(fd, LK_NBLCK, 1)` (trava do diretório de dados) | `getattr(os, "O_BINARY", 0)`; uma função `lock_byte(fd, wait)` num módulo só, com `msvcrt.locking` no Windows e `fcntl.lockf(fd, LOCK_EX \| LOCK_NB, 1, 1 << 30)` no POSIX |
 | `deck_studio/projects.py:16,120,122,127,181` | `import msvcrt`, `O_BINARY`, `msvcrt.locking(LK_LOCK)` / `LK_UNLCK` | a mesma `lock_byte` (com espera) e `getattr(os, "O_BINARY", 0)` |
 | `deck_studio/beamer/engine.py:62`; `deck_studio/features/jobs.py:51`; `deck_studio/projects.py:169` | `taskkill /T /F /PID` para matar a árvore de processos | no POSIX, abrir o filho com `start_new_session=True` e matar com `os.killpg(os.getpgid(pid), signal.SIGKILL)`; uma função `kill_tree(proc)` usada nos três lugares |
 | `deck_studio/beamer/engine.py:57`; `deck_studio/config.py:184`; `deck_studio/features/jobs.py:45`; `deck_studio/projects.py:204,265` | `creationflags=subprocess.CREATE_NO_WINDOW` (o atributo não existe fora do Windows: `AttributeError`) | constante `NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)` |
-| `deck_studio/beamer/engine.py:119,176` (comentário em `:164`) | `-max-print-line=10000`, opção de linha de comando do MiKTeX; no TeX Live é variável do `texmf.cnf` | passar a opção só no MiKTeX (detectar por `pdflatex --version`) e, no TeX Live, pôr `max_print_line=10000` no `env` do processo (o kpathsea lê variáveis do `texmf.cnf` do ambiente; confirmar no primeiro Mac) |
-| `deck_studio/beamer/engine.py:26-27,40` | `PERL_PLACES` com pastas do Git for Windows e do Strawberry Perl, e `perl.exe` | fora do Windows, só `shutil.which("perl")` (o macOS traz perl) |
-| `deck_studio/__main__.py:29,30,37,42` | `DEFAULT_KIT` com caminho pessoal; dados em `%LOCALAPPDATA%` | sem kit padrão; dados em `${CLAUDE_PLUGIN_DATA}` (no plugin) ou, no app, `LOCALAPPDATA` no Windows e `~/Library/Application Support/deck-studio` no Mac |
+| `deck_studio/beamer/engine.py:119,176` (comentário em `:164`) | `-max-print-line=10000`, opção de linha de comando do MiKTeX; no TeX Live é variável do `texmf.cnf` | passar a opção só no MiKTeX (detectar por `pdflatex --version`) e, no TeX Live, pôr `max_print_line=10000` no `env` do processo (o kpathsea lê variáveis do `texmf.cnf` do ambiente; confirmar no primeiro Linux) |
+| `deck_studio/beamer/engine.py:26-27,40` | `PERL_PLACES` com pastas do Git for Windows e do Strawberry Perl, e `perl.exe` | fora do Windows, só `shutil.which("perl")` (no Linux, o pacote `perl` do apt) |
+| `deck_studio/__main__.py:29,30,37,42` | `DEFAULT_KIT` com caminho pessoal; dados em `%LOCALAPPDATA%` | sem kit padrão; dados em `${CLAUDE_PLUGIN_DATA}` (no plugin) ou, no app, `LOCALAPPDATA` no Windows e `${XDG_DATA_HOME:-~/.local/share}/deck-studio` no Linux |
 | `deck_studio/features/projects.py:37,79` | exemplo `C:\Users\voce\…` e pasta padrão em `%USERPROFILE%\Deck Studio` | `Path.home() / "Deck Studio"` e o exemplo conforme o sistema |
 | `deck_studio/config.py:23` | publicar com `powershell … publish_netlify.ps1` | é só do deck NEXUS-GO: fica fora do plugin |
 | `deck_studio/core/shell_policy.py:12,36,71` | política de shell que lê caminhos no formato Windows (`/c/Users` = `C:\Users`, `.exe`) | sai no plugin (as permissões do Claude Code substituem); no app, só se o app for portado |
-| `Abrir Deck Studio.cmd` | lançador `.cmd` com `.venv\Scripts\python.exe` | sai no plugin; no app, um `abrir.command` para o Mac |
-| `deck_studio/ui` / testes | testes com caminhos `C:\Users\…` (lista em a.4) | `tmp_path` e `STUDIO_KIT`, rodando em CI com matriz `windows-latest` e `macos-latest` |
+| `Abrir Deck Studio.cmd` | lançador `.cmd` com `.venv\Scripts\python.exe` | sai no plugin; no app, um `abrir.sh` para o Linux |
+| `deck_studio/ui` / testes | testes com caminhos `C:\Users\…` (lista em a.4) | `tmp_path` e `STUDIO_KIT`, rodando em CI com matriz `windows-latest` e `ubuntu-latest` |
 
 O total de mudanças é pequeno e concentrado em três funções (`lock_byte`, `kill_tree`, `NO_WINDOW`) mais o TeX. Esforço em medição.
 
@@ -216,40 +217,35 @@ Duas observações, sem pedir decisão nova:
 - **Logos** (`beamer/v2-colegas/logos/`) são marcas da instituição. Entram como no deck da defesa; se a instituição restringir o uso fora de trabalhos dela, eles saem numa versão seguinte.
 - **Auditoria de números:** o `qa/audit_numbers.py` do exemplo confere contra `source/thesis/dissertation.tex`, que agora pode ir no template.
 
-### Perguntas ao dono que continuam abertas
+### Respostas do dono às perguntas abertas (04/11/2026, repassadas pelo orquestrador)
 
-1. **Repositório do plugin: privado com convite ou público?**
-   Opções: (a) privado, com convite a cada colega (exige conta GitHub e `gh auth setup-git`); (b) público desde o início.
-   Recomendo (a) no piloto e (b) depois do feedback dos colegas.
-   Por que importa: define quem vê o código e o exemplo, e o que cada colega precisa instalar. O conteúdo do template já está liberado; a pergunta é só sobre o código e o momento.
-2. **Licença do plugin?**
-   Opções: (a) AGPL-3.0; (b) MIT, trocando o PyMuPDF por uma biblioteca permissiva; (c) nenhuma enquanto for privado.
-   Recomendo (a), como na seção b.
-   Por que importa: sem licença, ninguém pode usar o código público; com MIT, o PyMuPDF continuaria impondo a AGPL.
-3. **Colegas e sistemas operacionais?**
-   Pergunta: quem entra no piloto, em que sistema (Windows ou Mac, Intel ou Apple Silicon) e se cada um tem Claude Pro ou acima.
-   Recomendo começar com 2 ou 3 colegas, pelo menos 1 deles no Mac.
-   Por que importa: o código só roda no Windows hoje (tabela da seção c), e o plano de testes depende de haver um Mac.
+1. **Repositório do plugin: público desde já.** Quem cria `ymauhn/deck-studio-plugin` e o torna público é o orquestrador, depois da varredura da etapa 8 (caminhos pessoais, e-mail e segredos), feita antes do primeiro push público.
+2. **Licença: AGPL-3.0.**
+3. **Colegas e sistemas: Linux ou Windows, não Mac.** O porte POSIX mira o Linux, com CI em `ubuntu-latest`; o manual cobre Windows e Linux (Ubuntu/Debian, com `apt`); o Mac fica fora do piloto.
 
-Recomendações que não pedem resposta (valem se o dono não disser o contrário): e-mail `ymauhn@users.noreply.github.com` nos commits do repositório novo, e o app atual (`ymauhn/deck-studio`) continua privado.
+Não há perguntas abertas neste plano.
+
+Recomendações que valem se o dono não disser o contrário: e-mail `ymauhn@users.noreply.github.com` nos commits do repositório novo, e o app atual (`ymauhn/deck-studio`) continua privado.
 
 ---
 
 ## e) Ordem de execução
 
-| Etapa | O quê | Quem | Espera |
-|---|---|---|---|
-| 0 | Este plano: o dono responde às 3 perguntas abertas da seção d | dono | — |
-| 1 | Fase 1 (gerador) passa no aceite, em `feat/gerador-v1` | sessão do Deck Studio | aceite do dono; os ajustes da apresentação dele |
-| 2 | Portar para POSIX as funções da tabela da seção c (`lock_byte`, `kill_tree`, `NO_WINDOW`, TeX), com testes, num branch do app | sessão de ticket | — (não muda o comportamento no Windows) |
-| 3 | Criar o repositório `ymauhn/deck-studio-plugin` (privado no piloto), e-mail noreply, `LICENSE`, README da seção b | orquestrador | **sim do dono**: criar o repositório; respostas 1 e 2 |
-| 4 | Montar o plugin: skills da Fase 1, servidor MCP `deck`, hook de guarda, agente juiz, editor visual sem chat, `claude plugin validate` verde | sessão de ticket | — |
-| 5 | Template: `projeto-vazio` e `exemplo-nexus-go`, este copiado do kit na versão atual, com o conteúdo completo (decisão de 04/11) menos o que a seção d deixa de fora; os GIFs de `docs/gifs` podem ir para o README do plugin | sessão de ticket | o dono terminar os ajustes da apresentação (o template copia a versão final) |
-| 6 | Teste no Windows do dono e num Mac (um colega ou uma VM; CI `macos-latest` para os testes de unidade) | dono e um colega | resposta 3 |
-| 7 | Convidar os colegas; manual de instalação; formulário de feedback; nota de privacidade | dono | **sim do dono** para cada convite; o formulário é criado pelo dono |
-| 8 | Repetir a varredura da seção a no repositório novo (agora atrás de caminhos pessoais, e-mail e segredos, já que nomes e dados da tese estão liberados) antes de tornar público | orquestrador | **sim do dono** para tornar público |
+Ordem decidida em 04/11 (repassada pelo orquestrador): primeiro a preparação do repositório e a Fase 1; depois o porte para Linux, a montagem do plugin e os templates; depois a varredura; só então o push público, feito pelo orquestrador.
+
+| Ordem | Etapa | O quê | Quem | Espera |
+|---|---|---|---|---|
+| 1 | 3 | Preparar o repositório `ymauhn/deck-studio-plugin` **localmente**, ainda sem push: e-mail noreply, `LICENSE` AGPL-3.0 (decidida), README da seção b | orquestrador | — |
+| 1 | Fase 1 | O gerador passa no aceite, em `feat/gerador-v1` | sessão do Deck Studio | aceite do dono; os ajustes da apresentação dele |
+| 2 | 2 | Portar para Linux as funções da tabela da seção c (`lock_byte`, `kill_tree`, `NO_WINDOW`, TeX Live, perl), com testes e CI em `ubuntu-latest` e `windows-latest` | sessão de ticket | — (não muda o comportamento no Windows) |
+| 2 | 4 | Montar o plugin: skills da Fase 1, servidor MCP `deck`, hook de guarda, agente juiz, editor visual sem chat, `claude plugin validate` verde | sessão de ticket | — |
+| 2 | 5 | Templates: `projeto-vazio` e `exemplo-nexus-go`, este copiado do kit na versão final, com o conteúdo completo (decisão de 04/11) menos o que a seção d deixa de fora; os GIFs de `docs/gifs` podem ir para o README | sessão de ticket | o dono terminar os ajustes da apresentação |
+| 3 | 8 | Varredura do repositório local antes do primeiro push público: caminhos pessoais (`C:\Users\…`, OneDrive), e-mail pessoal nos commits e segredos (`sk-ant-`, `ghp_`, `AKIA`, chaves privadas, tokens). Nomes e dados da tese estão liberados e não contam como achado | orquestrador | — |
+| 4 | push | Criar `ymauhn/deck-studio-plugin` no GitHub como **público** e fazer o primeiro push, só com a varredura limpa | orquestrador | varredura da etapa 8 sem achados |
+| 5 | 6 | Teste no Windows do dono e num Linux (Ubuntu/Debian; um colega ou uma VM) | dono e um colega | — |
+| 5 | 7 | Mandar aos colegas o link do marketplace e o manual; formulário de feedback; nota de privacidade | dono | o formulário é criado pelo dono |
 
 ### O que espera o dono
-- As 3 perguntas abertas da seção d: repositório público ou privado, licença, colegas e sistemas.
-- O sim para criar o repositório novo.
+- O aceite da Fase 1 e o fim dos ajustes da apresentação (o template copia a versão final).
+- O formulário de feedback e a lista nominal dos colegas do piloto.
 - Nada disso pede deploy nem gasto fora da assinatura.

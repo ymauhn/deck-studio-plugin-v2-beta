@@ -1,0 +1,107 @@
+[
+ {
+  "t": 6.7,
+  "tipo": "inicio",
+  "o-que": "criar projeto da pasta"
+ },
+ {
+  "t": 19.9,
+  "tipo": "fim",
+  "o-que": "criar projeto da pasta"
+ },
+ {
+  "t": 19.9,
+  "tipo": "inicio",
+  "o-que": "geração pelo agente (os primeiros passos)"
+ },
+ {
+  "t": 59.9,
+  "tipo": "fim",
+  "o-que": "geração pelo agente (os primeiros passos)"
+ },
+ {
+  "t": 59.9,
+  "tipo": "espera-inicio",
+  "o-que": "o agente gera o deck"
+ },
+ {
+  "t": 196.0,
+  "tipo": "espera-fim",
+  "o-que": "o agente gera o deck"
+ },
+ {
+  "t": 196.0,
+  "tipo": "inicio",
+  "o-que": "o deck pronto e o resumo do agente"
+ },
+ {
+  "t": 201.0,
+  "tipo": "fim",
+  "o-que": "o deck pronto e o resumo do agente"
+ },
+ {
+  "t": 201.0,
+  "tipo": "inicio",
+  "o-que": "Ir para o slide"
+ },
+ {
+  "t": 207.5,
+  "tipo": "fim",
+  "o-que": "Ir para o slide"
+ },
+ {
+  "t": 207.5,
+  "tipo": "inicio",
+  "o-que": "editar pelo chat (selecionar a caixa)"
+ },
+ {
+  "t": 215.9,
+  "tipo": "fim",
+  "o-que": "editar pelo chat (selecionar a caixa)"
+ },
+ {
+  "t": 215.9,
+  "tipo": "inicio",
+  "o-que": "Seguir o agente (o deck vai sozinho ao slide editado)"
+ },
+ {
+  "t": 231.0,
+  "tipo": "fim",
+  "o-que": "Seguir o agente (o deck vai sozinho ao slide editado)"
+ },
+ {
+  "t": 231.0,
+  "tipo": "nota",
+  "o-que": "depois da edição pelo chat, o deck está no slide 3 (a caixa escolhida era do 3)"
+ },
+ {
+  "t": 231.0,
+  "tipo": "inicio",
+  "o-que": "edição direta (duplo clique)"
+ },
+ {
+  "t": 238.3,
+  "tipo": "fim",
+  "o-que": "edição direta (duplo clique)"
+ },
+ {
+  "t": 238.3,
+  "tipo": "inicio",
+  "o-que": "cadastrar link e publicar"
+ },
+ {
+  "t": 256.3,
+  "tipo": "fim",
+  "o-que": "cadastrar link e publicar"
+ },
+ {
+  "t": 256.3,
+  "tipo": "nota",
+  "o-que": "a publicação desta gravação foi para o Netlify falso local; a real é feita depois, pelo orquestrador"
+ },
+ {
+  "t": 258.1,
+  "tipo": "nota",
+  "o-que": "fim da gravação"
+ }
+]

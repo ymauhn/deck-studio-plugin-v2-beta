@@ -15,8 +15,8 @@ router = APIRouter()
 
 
 def timeout(state):
-    """Seconds an approval waits: 10 min, or the config's approvalTimeout."""
-    return state.config.get("approvalTimeout", 600)
+    """Seconds an approval waits: 2 min (10 min held the agent too long, 04/11), or the config's approvalTimeout."""
+    return state.config.get("approvalTimeout", 120)
 
 
 def _pending(state):
@@ -27,7 +27,7 @@ async def ask(state, chat_id, turn_id, tool, summary, reason):
     """Show the card and wait: "allow", "deny" or "timeout". A cancelled wait (the turn stopped) closes the card."""
     approval_id = str(uuid.uuid4())
     card = {"id": approval_id, "chatId": chat_id, "turnId": turn_id, "tool": tool, "summary": summary,
-            "reason": reason, "state": "pending"}
+            "reason": reason, "state": "pending", "timeout": timeout(state)}
     answer = asyncio.get_running_loop().create_future()
     _pending(state)[approval_id] = answer, card
     await state.events.publish("approval", **card)

@@ -71,8 +71,10 @@ def _name(word):
     return w[:-4] if w.endswith(".exe") else w
 
 
-def local_command(command, kit_root, local_scripts):
-    """(True, why) when the command passes at the Autônomo level, else (False, why)."""
+def local_command(command, kit_root, local_scripts, read_only=False, readable=()):
+    """(True, why) when the command passes at the Autônomo level, else (False, why). With read_only (the default
+    level, "Editar o deck"), only read-only commands pass, and every path they name, or cd to, must be inside the kit
+    or one of the `readable` folders."""
     if not isinstance(command, str) or not command.strip():
         return False, "comando vazio"
     if EXTERNAL.search(command):
@@ -104,7 +106,18 @@ def local_command(command, kit_root, local_scripts):
         args = words[1:]
         if cmd in ("cd", "set-location", "sl", "pushd") and args:
             cwd = ntpath.normpath(ntpath.join(cwd, _win(args[0])))
+            if read_only and not any(_inside(r, cwd) for r in (kit_root, *readable)):
+                return False, "leitura fora do deck"
             continue
+        if read_only:
+            if cmd in INTERPRETERS or cmd in TEX:
+                return False, f"{cmd} roda código: só no Autônomo"
+            for a in args:  # every path a read names, from the current folder
+                if a.startswith("-") or not re.search(r"[\\/]|^\.\.?$|\.\w+$", a):
+                    continue
+                path = ntpath.normpath(ntpath.join(cwd, _win(a)))
+                if not any(_inside(r, path) for r in (kit_root, *readable)):
+                    return False, "leitura fora do deck"
         if cmd == "git":
             if not args or args[0] not in GIT_READ:
                 return False, f"git {args[0] if args else ''}"
