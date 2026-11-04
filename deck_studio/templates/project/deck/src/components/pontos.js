@@ -23,7 +23,7 @@ COMPONENTS.PONTOS = (el, o) => {
   });
   for (const t of tk) {
     K.svg(s, 'line', { class: 'grid', x1: x(t), x2: x(t), y1: TOP - 10, y2: H - 30 });
-    K.svg(s, 'text', { class: 'tick', x: x(t), y: H - 6, 'text-anchor': 'middle' }, K.fmt(t, Number.isInteger(t) ? 0 : casas));
+    K.svg(s, 'text', { class: 'tick', x: x(t), y: H - 6, 'text-anchor': 'middle' }, K.fmt(t, K.dec(t)));
   }
   const rows = itens.map((it, i) => {
     const cy = TOP + i * RH + RH / 2;

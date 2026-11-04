@@ -87,5 +87,6 @@ const K = (() => {
     el.prepend(bar);
     el.append(t);
   }
-  return { svg, html, fmt, signed, color, still, count, ticks, lin, tips, table };
+  const dec = (t) => (String(t).split(".")[1] || "").length; // a tick shows only the decimals it has
+  return { svg, html, fmt, signed, color, still, count, ticks, lin, tips, table, dec };
 })();

@@ -13,7 +13,7 @@ COMPONENTS.ESCADA = (el, o) => {
   const s = K.svg(view, 'svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': o.titulo || ds.map((d) => `${d.rotulo}: ${K.fmt(d.valor, casas)}${un}`).join('; ') });
   for (const t of tk) {
     K.svg(s, 'line', { class: 'grid', x1: L, x2: W - 10, y1: y(t), y2: y(t) });
-    K.svg(s, 'text', { class: 'tick', x: L - 10, y: y(t) + 6, 'text-anchor': 'end' }, K.fmt(t, Number.isInteger(t) ? 0 : casas));
+    K.svg(s, 'text', { class: 'tick', x: L - 10, y: y(t) + 6, 'text-anchor': 'end' }, K.fmt(t, K.dec(t)));
   }
   const steps = ds.map((d, i) => {
     const x0 = L + i * cw, x1 = x0 + cw, yv = y(d.valor), prev = i ? y(ds[i - 1].valor) : yv;

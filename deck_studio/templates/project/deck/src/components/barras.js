@@ -5,7 +5,7 @@ COMPONENTS.BARRAS = (el, o) => {
   const itens = o.itens || [], casas = o.casas ?? 0, un = o.unidade ? ` ${o.unidade}` : '';
   const W = o.largura || el.clientWidth || 900, LW = o.rotulos || 260, RH = 58, BH = 30, TOP = 8;
   const vals = itens.map((i) => i.valor);
-  const lo = Math.min(0, o.min ?? Math.min(...vals)), tk = K.ticks(lo, o.max ?? Math.max(...vals));
+  const tk = K.ticks(Math.min(0, o.min ?? Math.min(...vals)), o.max ?? Math.max(...vals)), lo = Math.min(0, tk[0]);
   const hi = Math.max(o.max ?? 0, tk[tk.length - 1], ...vals);
   const x = K.lin(lo, hi, LW, W - 90), H = TOP + itens.length * RH + 36;
   el.classList.add('cp', 'cp-barras');
@@ -14,7 +14,7 @@ COMPONENTS.BARRAS = (el, o) => {
   const axis = K.svg(s, 'g', { class: 'cp-axis' });
   for (const t of tk) {
     K.svg(axis, 'line', { class: 'grid', x1: x(t), x2: x(t), y1: TOP, y2: H - 30 });
-    K.svg(axis, 'text', { class: 'tick', x: x(t), y: H - 6, 'text-anchor': 'middle' }, K.fmt(t, Number.isInteger(t) ? 0 : casas));
+    K.svg(axis, 'text', { class: 'tick', x: x(t), y: H - 6, 'text-anchor': 'middle' }, K.fmt(t, K.dec(t)));
   }
   K.svg(axis, 'line', { class: 'base', x1: x(0), x2: x(0), y1: TOP, y2: H - 30 });
   const rows = itens.map((it, i) => {
