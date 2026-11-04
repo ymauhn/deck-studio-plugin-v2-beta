@@ -5,6 +5,8 @@ description: Builds the whole talk from the PDF imported into this project, in t
 
 # Build the talk from the PDF
 
+Write every message to the author in Brazilian Portuguese, the short notes between tool calls included, even when the PDF is in English.
+
 Work without asking questions: make the choices yourself and list them in the summary at the end. The rules and the markup are in the project's CLAUDE.md.
 
 The first request may end with the author's instructions (`Instruções do autor: ...`): the time of the talk, the audience, the event and its date, who presents, what to stress. They come before the defaults below.

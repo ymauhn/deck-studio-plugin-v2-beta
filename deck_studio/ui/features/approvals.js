@@ -30,6 +30,13 @@ export default function (studio) {
       actions.append(button);
     }
     el.append(Object.assign(document.createElement('p'), { className: 'approval-why', textContent: e.reason }), actions);
+    // an unanswered card does not hold the agent: it is denied after the timeout, and the agent goes on
+    if (e.timeout) {
+      const minutes = Math.round(e.timeout / 60);
+      const when = e.timeout >= 60 ? `${minutes} min` : `${e.timeout} s`;
+      el.append(Object.assign(document.createElement('p'), { className: 'approval-timeout',
+        textContent: `Sem resposta em ${when}, o pedido é negado e o agente segue sem ele.` }));
+    }
     return studio.chat.append(el);
   }
 

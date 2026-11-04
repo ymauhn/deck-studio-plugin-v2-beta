@@ -192,3 +192,19 @@ def test_a_tool_result_over_one_mib_reaches_the_agent_and_the_turn_ends_normally
     assert "".join(e["text"] for e in kinds(events, "text")).strip()
     assert kinds(events, "turn-end")[0]["files"] == []
     assert not [line for line in live.stderr if "Traceback" in line or "Exception ignored" in line]
+
+
+PT_WORDS = {"que", "o", "a", "de", "do", "da", "em", "um", "uma", "é", "não", "os", "as", "com", "para", "slide"}
+EN_WORDS = {"the", "is", "and", "of", "to", "in", "this", "that", "it", "with", "for", "slide"}
+
+
+def test_every_message_is_in_portuguese_even_asked_in_english_about_english_slides(live, chat):
+    """Finding of the recorded end-to-end test (2026-11-04): a note between tool calls came out in English."""
+    events = live.turn(chat, "Read deck/src/slides/03-data.html and tell me in two short sentences what its first "
+                             "slide is about.")
+    text = " ".join(e["text"] for e in kinds(events, "text")).lower()
+    words = re.findall(r"[a-zà-ú]+", text)
+    pt = sum(w in PT_WORDS - EN_WORDS for w in words)
+    en = sum(w in EN_WORDS - PT_WORDS for w in words)
+    print(f"\n  pt words {pt}, en words {en}: {text[:300]!r}")
+    assert pt > 3 * max(en, 1), text

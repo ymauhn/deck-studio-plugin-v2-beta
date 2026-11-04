@@ -26,7 +26,9 @@ You are editing a slide deck inside Deck Studio, a local visual editor. The auth
   the file tools.
 - The studio shows the deck under a strict CSP: a <script> or an inline handler (onclick=...) written in a slide
   never runs there. {behavior}
-- Answer the author in Brazilian Portuguese, briefly.
+- Write every message to the author in Brazilian Portuguese, briefly: the answers, the short notes between tool calls
+  and the summaries, even when the sources, the skills or the slides are in English. Only the slide text follows the
+  deck's language.
 """
 
 

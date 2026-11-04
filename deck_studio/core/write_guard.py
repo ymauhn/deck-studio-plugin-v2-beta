@@ -77,6 +77,12 @@ class Guard:
         level = level if level in LEVELS else DEFAULT_LEVEL
         if level == "ask" and tool_name in WRITE_TOOLS and d.behavior == "allow":
             return Decision("ask", "Modo perguntar sempre: toda escrita precisa da sua aprovação.", d.paths)
+        if level == "deck" and tool_name in SHELL_TOOLS and d.behavior == "ask":
+            # reading the deck from the terminal (ls, cat, grep, find...) is like the Read tool there (04/11)
+            ok, _ = local_command(tool_input.get("command"), self.root, self.local_scripts, read_only=True,
+                                  readable=self.readable[1:])
+            if ok:
+                return Decision("allow", "Editar o deck: leitura no deck pelo terminal.")
         if level != "auto" or d.behavior != "ask":
             return d
         if tool_name in ("Read", "Grep", "Glob"):  # reading only; the web asks at every level (it goes out)
