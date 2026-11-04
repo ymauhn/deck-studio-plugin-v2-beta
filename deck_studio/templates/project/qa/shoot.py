@@ -41,7 +41,7 @@ def main():
     errors = []
     with sync_playwright() as p:
         b = p.chromium.launch()
-        page = b.new_page(viewport={"width": 1600, "height": 900})
+        page = b.new_page(viewport={"width": 1600, "height": 900}, reduced_motion="reduce")  # charts and numbers at their final values
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(DECK.as_uri())
         page.wait_for_function("window.deck !== undefined")
