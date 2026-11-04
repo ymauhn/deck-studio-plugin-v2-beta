@@ -24,7 +24,7 @@ O autor fala com você em português. Responda em português, curto.
    4. formatos: HTML e PDF; Beamer gerado do HTML; ou Beamer no formato dos colegas (Madrid);
    5. narração: só as notas, ou também o `roteiro.md` (texto por passo, para gravar);
    6. identidade visual: o tema do kit com 2 ou 3 cores ligadas aos conceitos do material (diga quais, por exemplo "azul = método, laranja = dados, verde = resultado"), ou o Beamer dos colegas;
-   7. interatividade: só passos, ou também um diagrama central;
+   7. interatividade: o padrão é o nível do kit, com 1 diagrama animado do método (FLUXO) e de 2 a 3 gráficos animados com números da fonte (BARRAS, ESCADA, PONTOS), mais números que contam; o autor pode baixar para menos, ou para só passos;
    8. figuras: quais entram, e se a legenda "Fonte: Fig. n" aparece (o padrão é oculta, com a fonte nas notas);
    9. fatos: só os números da fonte, ou também números externos citados (só com autorização);
    10. paradas de revisão: depois da storyline e no fim (padrão), ou só no fim.
@@ -64,8 +64,13 @@ O autor fala com você em português. Responda em português, curto.
    - os próximos passos;
    - o agradecimento;
    - as referências como reserva.
-4. **Cores:** registre em `docs/DECISIONS.md` qual cor (`--c1`, `--c2`, `--c3`) é qual conceito.
-5. Se o briefing tem a parada da storyline, mande ao autor a lista numerada de títulos, com os passos de cada slide, e **termine o pedido**. Ao voltar, aplique o que ele mudou na `STORYLINE.md` antes de seguir.
+4. **Visuais:** o deck tem o nível do kit, não só texto e imagens. A storyline marca no campo "visual" de cada slide o componente que ele usa, e tem, salvo se o briefing baixou:
+   - pelo menos 1 diagrama animado do método (exemplo 13, FLUXO), com rotas quando o trabalho tem variantes;
+   - de 2 a 3 gráficos animados com números reais da fonte (14 BARRAS, 15 ESCADA, 16 PONTOS), escolhidos pelo "quando usar" de cada exemplo; cada valor vem do `FACTS.md`;
+   - números que contam (18) no resultado principal, e tabelas que revelam linha por linha (17) quando a fala percorre uma tabela.
+   Sem números na fonte, os gráficos ficam de fora, e o `briefing.json` diz isso.
+5. **Cores:** registre em `docs/DECISIONS.md` qual cor (`--c1`, `--c2`, `--c3`) é qual conceito.
+6. Se o briefing tem a parada da storyline, mande ao autor a lista numerada de títulos, com os passos de cada slide, e **termine o pedido**. Ao voltar, aplique o que ele mudou na `STORYLINE.md` antes de seguir.
 
 ## D. Slides, parte por parte
 
@@ -74,6 +79,7 @@ O autor fala com você em português. Responda em português, curto.
    - copie a estrutura e as classes;
    - troque os colchetes pelo conteúdo da storyline.
    Não invente classe nova: o que não cabe num exemplo é sinal de que o slide tem ideia demais.
+   **Componentes** (exemplos 13 a 18): o FLUXO, as BARRAS, a ESCADA, os PONTOS e o NUMERO já estão no deck (`deck/src/components/`). Você não escreve JavaScript nem SVG para eles: o slide só traz `data-component` e `data-opts`, com os números do `FACTS.md` copiados exatos (ponto decimal no JSON; o componente escreve a vírgula). Confira com `mcp__deck__screenshot_slide` no último passo, onde tudo já entrou.
 2. **Arquivos:** `deck/src/slides/00-titulo.html`, depois um arquivo por parte (`01-problema.html`, `02-metodo.html`...). Cada `<section>` tem o `id` da storyline e o `data-part` com o nome da parte. Os de reserva levam `class="slide backup"` e ficam no último arquivo.
 3. **Figuras:** use `mcp__deck__add_image` com o arquivo da fonte em `context/`, e escreva o alt e a legenda da fonte, que fica oculta, como o exemplo mostra.
 4. **Conferência:** depois de cada parte, rode `mcp__deck__screenshot_slide` e `mcp__deck__check_slide` nos slides novos e corrija o que transborda, encurtando o texto.
@@ -87,6 +93,7 @@ O autor fala com você em português. Responda em português, curto.
    - há contraste nos dois temas;
    - cada slide tem notas terminando com a página;
    - não há travessão;
+   - o deck tem os visuais do briefing (o diagrama e os gráficos);
    - todo número tem fonte.
 2. Chame `mcp__deck__judge_deck`. O juiz é uma sessão separada, que só lê o projeto e segue `qa/RUBRICA.md`. Corrija todo item **BLOQUEANTE**, e os outros quando forem baratos. Rode `run_qa` e o juiz de novo, no máximo três rodadas.
 3. O que o juiz pediu e você não fez vai para `docs/DECISIONS.md`, com o motivo.

@@ -5,7 +5,9 @@ Usage: python -I -X utf8 qa/audit_numbers.py [deck.html]    (default deck/dist/d
 The source is every texto.md, .md, .tex and .txt file under context/ (the import puts the PDF's text in
 context/<slug>/texto.md). A number matches when the same value is there in either decimal convention: 73,18 on a
 Portuguese slide matches 73.18 in an English source. Allowed without a source: years (1900-2099), whole numbers up
-to 10 (counts and ordinals), and the canvas size. Writes qa/number_audit.md; exits 1 when a number has no source.
+to 10 (counts and ordinals), and the canvas size. Left out: a chart's axis ticks, the differences a staircase
+chart computes from its own values (both come from numbers that are audited) and the chart's Tabela view, which
+repeats them. Writes qa/number_audit.md; exits 1 when a number has no source.
 Only Playwright and the standard library.
 """
 import re
@@ -62,7 +64,7 @@ def main():
     rows, unmatched = [], 0
     with sync_playwright() as p:
         b = p.chromium.launch()
-        page = b.new_page(viewport={"width": 1600, "height": 900})
+        page = b.new_page(viewport={"width": 1600, "height": 900}, reduced_motion="reduce")  # numbers that count stop at the end
         page.goto(DECK.as_uri())
         page.wait_for_function("window.deck !== undefined")
         steps, labels = page.evaluate("deck.steps()"), page.evaluate("deck.labels()")
@@ -70,7 +72,7 @@ def main():
             page.evaluate(f"deck.go({i}, {n})")
             text = page.evaluate("""() => {
               const s = document.querySelector('section.slide.active').cloneNode(true);
-              s.querySelectorAll('aside.notes, figcaption.cap, .cap, script, style').forEach((e) => e.remove());
+              s.querySelectorAll('aside.notes, figcaption.cap, .cap, script, style, .cp .tick, .cp .delta, .cp-table, .tip').forEach((e) => e.remove());
               const w = document.createTreeWalker(s, NodeFilter.SHOW_TEXT); const o = [];
               while (w.nextNode()) o.push(w.currentNode.textContent);
               return o.join(' ');

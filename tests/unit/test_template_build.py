@@ -297,7 +297,7 @@ def test_every_example_slide_fits_its_slide_an_articles_long_title_included(proj
     """The agent copies each slide from an example of exemplos/ (one per type, from the NEXUS-GO kit), and an
     article's full title, as the PDF has it, goes in the title slide's subtitle."""
     examples = sorted((project / ".claude/skills/criar-apresentacao/exemplos").glob("*.html"))
-    assert len(examples) == 12
+    assert len(examples) == 18
     patterns = "\n".join(read(f) for f in examples)
     long_title = ("Network-Extended Unified Sequence Embeddings for Gene Ontology Function Annotation in Large Protein "
                   "Interaction Graphs")
@@ -328,7 +328,7 @@ def test_an_english_deck_has_its_help_notes_and_presenter_words_in_english():
         assert [text for tag, text in Texts(html).texts if tag == "h2"][-1] == "Keys"  # the help's heading
         for words in ("Close notes", "next step or slide", ">Next<", "step ${frag} of", "<title>Presenter</title>"):
             assert words in html, words
-        for words in ("Fechar", "Teclas", "Próximo", "passo", "Apresentador"):
+        for words in ("Fechar", "Teclas", "Próximo", "passo ${", "Apresentador", "Diferença", ">rota<"):
             assert words not in html, words
     finally:
         remove_tree(tmp)

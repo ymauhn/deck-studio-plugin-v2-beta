@@ -33,6 +33,16 @@ Cada slide leva uma nota de 0 a 3 em cada critério. Um item é **BLOQUEANTE** q
 
 ## Critérios do deck inteiro
 
+- **Interatividade e visualização de dados (BLOQUEANTE quando falta).** O deck tem o nível do kit:
+  - um diagrama animado do método (FLUXO) que explica o caminho dos dados;
+  - de 2 a 3 gráficos animados (BARRAS, ESCADA, PONTOS) com os números reais da fonte, quando a fonte tem números;
+  - os passos revelam a fala, e os números do resultado principal contam.
+  Um deck só de texto e imagens não passa. Também é BLOQUEANTE:
+  - um gráfico cujo tipo não serve aos dados, como barras para uma etapa que se soma, que é caso da ESCADA;
+  - um gráfico com números fora do `FACTS.md`;
+  - um diagrama que não bate com o método da fonte.
+  A exceção é o `docs/briefing.json` ter baixado a interatividade: então o critério segue o que ele pede.
+
 - **Arco:** problema, objetivo, método, resultados, conclusões, limitações e próximos passos, nessa ordem, com os resultados ocupando mais slides.
 - **Duração:** o número de slides combina com a duração do briefing, cerca de um por minuto.
 - **Storyline:** os slides são os da `docs/STORYLINE.md`, na mesma ordem.

@@ -190,6 +190,15 @@ ol.contrib li::before { content: counter(c); font: 500 24px/1.4 var(--font-data)
 .f.on { opacity: 1; transform: none; transition: opacity 260ms var(--ease), transform 260ms var(--ease); }
 .fo.off { opacity: 0; transition: opacity 260ms var(--ease); }
 .slide:not(.active) .f.on { transition: none; }
+/* step transitions (with .f): .esq comes in from the left, .cresce grows from the centre, .marca flashes a
+   background when it comes; in a table, tr.f reveals the row and tr.f.marca highlights it; .fo leaves at its step */
+.f.esq { transform: translateX(-28px); }
+.f.cresce { transform: scale(.92); }
+.f.esq.on, .f.cresce.on { transform: none; }
+.f.marca.on { animation: marca 1.4s var(--ease) both; }
+@keyframes marca { 0% { background: color-mix(in srgb, var(--c1) 22%, transparent); } 100% { background: transparent; } }
+table.t tr.f { transform: none; }
+table.t tr.f.marca.on { animation: none; background: color-mix(in srgb, var(--c3) 12%, transparent); }
 
 /* ---------- controls ---------- */
 .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 20px; color: var(--ink-2); }

@@ -19,6 +19,8 @@ Only Playwright and the standard library: it runs the same in Deck Studio and in
 16 offline     with the network blocked, the three embedded fonts load and every image renders
 17 notes       every slide has speaker notes that end with the source page: (p. 12) or (pp. 3-4) or (-) for none
 18 text        no em dash in slide text or notes; at most 5 items in a list
+19 visuals     at least the briefing's animated diagrams (FLUXO) and data charts (BARRAS, ESCADA, PONTOS), by
+               default 1 and 2 (docs/briefing.json, "interatividade"); every component mounted
 """
 import json
 import re
@@ -54,6 +56,19 @@ def storyline_steps():
         nums = [int(x) for x in re.findall(r"F(\d+)", line)] + ([int(line)] if line.isdigit() else [])
         out[m[1]] = max(nums) if nums else 0
     return out
+
+
+def visuals_wanted():
+    """The minimum animated diagrams and data charts: docs/briefing.json "interatividade", else 1 and 2."""
+    want = {"diagramas": 1, "graficos": 2}
+    f = ROOT / "docs" / "briefing.json"
+    try:
+        got = json.loads(f.read_text(encoding="utf-8")).get("interatividade") if f.is_file() else None
+    except ValueError:
+        got = None
+    if isinstance(got, dict):
+        want.update({k: int(got[k]) for k in want if isinstance(got.get(k), (int, float))})
+    return want
 
 
 def figure_labels():
@@ -284,6 +299,28 @@ def main():
         fails += [f"pageerror: {e}" for e in rerr]
         rctx.close()
         record(9, "reduced motion", fails)
+
+        # 19 visuals: the kit's level of interactivity, unless the briefing lowered it
+        fails = []
+        want = visuals_wanted()
+        found = page.evaluate("""() => {
+          const n = {}; for (const e of document.querySelectorAll('section.slide:not(.backup) [data-component]'))
+            n[e.dataset.component] = (n[e.dataset.component] || 0) + 1;
+          return n; }""")
+        diagrams = found.get("FLUXO", 0)
+        charts = sum(found.get(k, 0) for k in ("BARRAS", "ESCADA", "PONTOS"))
+        if diagrams < want["diagramas"]:
+            fails.append(f"{diagrams} animated diagram(s) (FLUXO), the briefing asks for {want['diagramas']}: see exemplos/13-fluxo.html")
+        if charts < want["graficos"]:
+            fails.append(f"{charts} data chart(s) (BARRAS, ESCADA, PONTOS), the briefing asks for {want['graficos']}: see exemplos/14 to 16")
+        unknown = sorted(set(found) - {"FLUXO", "BARRAS", "ESCADA", "PONTOS", "NUMERO"})
+        if unknown:
+            fails.append(f"unknown data-component: {', '.join(unknown)}")
+        empty = page.evaluate("[...document.querySelectorAll('[data-component]:not([data-component=NUMERO])')]"
+                              ".filter((e) => { deck.go([...document.querySelectorAll('section.slide')].indexOf(e.closest('section')) + 1, 0);"
+                              " return !e.querySelector('svg, .cp-node'); }).map((e) => e.closest('section').id)")
+        fails += [f"{sid}: a component that drew nothing (check its data-opts)" for sid in empty]
+        record(19, f"visuals: {diagrams} diagram(s), {charts} chart(s)", fails)
 
         # 16 offline
         fails = []

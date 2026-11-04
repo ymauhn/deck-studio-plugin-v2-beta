@@ -47,7 +47,7 @@ def send(page, text):
 def test_the_template_brings_the_method(project):
     kit = project.kit
     skill = kit / ".claude/skills/criar-apresentacao"
-    assert len(list((skill / "exemplos").glob("*.html"))) == 12
+    assert len(list((skill / "exemplos").glob("*.html"))) == 18
     assert (skill / "ESTILO.md").is_file() and not (skill / "padroes.html").exists()
     for rel in ["docs/STORYLINE.template.md", "docs/FACTS.template.md", "docs/FIGURES.template.md", "docs/DECISIONS.md",
                 "docs/briefing.json", "qa/check_deck.py", "qa/audit_numbers.py", "qa/shoot.py", "qa/RUBRICA.md",

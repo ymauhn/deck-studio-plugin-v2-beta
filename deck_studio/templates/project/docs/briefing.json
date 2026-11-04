@@ -13,7 +13,7 @@
   "narracao": "notas",
   "identidade": "kit",
   "cores": {"c1": "[conceito 1]", "c2": "[conceito 2]", "c3": "[conceito 3 ou resultado]"},
-  "interatividade": "passos",
+  "interatividade": {"diagramas": 1, "graficos": 2, "numeros_que_contam": true, "_como": "o padrão é o nível do kit: 1 diagrama animado do método e de 2 a 3 gráficos animados com números da fonte; o autor pode baixar (0 = nenhum), e sem números na fonte, graficos fica 0"},
   "figuras": "as que sustentam a fala",
   "mostrar_legenda_fonte": false,
   "fatos": "só da fonte",
