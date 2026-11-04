@@ -54,6 +54,11 @@ def test_pt_shows_and_edits_the_src_pt_tree_and_the_export_follows_it(studio, st
     expect(deck_of(page).locator("[data-loc^='deck/src/slides/']")).to_have_count(0)
     expect(deck_of(page).locator("[data-loc^='deck/src-pt/slides/']").first).to_be_attached()
     expect(page.get_by_role("button", name="Traduzir para inglês")).to_be_hidden()
+    # the Files pane lists the Portuguese slides, open
+    files = page.get_by_role("region", name="Arquivos")
+    expect(files).to_contain_text("deck/src-pt/slides/")
+    expect(files).not_to_contain_text("deck/src/slides/")
+    expect(files.get_by_role("button", name="00-opening.html")).to_be_visible()
     # nothing was copied around
     assert not (studio.kit / "deck" / "src" / "i18n").exists()
     assert json.loads((studio.data / "settings.json").read_text(encoding="utf-8"))["language"] == "pt"
@@ -88,4 +93,5 @@ def test_back_to_en_the_studio_works_on_deck_src_again(studio, studio_page, api)
     expect(deck_of(page).get_by_text(EN)).to_be_visible(timeout=30_000)
     assert built(studio, api)["ok"]
     expect(deck_of(page).locator("[data-loc^='deck/src-pt/slides/']")).to_have_count(0)
+    expect(page.get_by_role("region", name="Arquivos")).not_to_contain_text("deck/src-pt/slides/")
     assert any(line.strip() == "stand-in for the export-pdf job" for line in export_log(page))

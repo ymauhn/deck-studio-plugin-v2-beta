@@ -15,6 +15,7 @@ export default function (studio) {
   drop.append(chooser, 'Solte aqui artigos, .md, PDFs e imagens');
   pane.append(tree, sending, drop);
   let open = null; // paths of the folders shown open
+  let shown = new Set(); // the paths of the slides roots last listed
   // a Beamer project works in its deck's folder, not in the HTML template: that folder comes first and open, and its
   // main .tex (studio.project.beamerStart) is the current file
   const start = studio.project?.format === 'beamer' ? studio.project.beamerStart : null;
@@ -100,7 +101,12 @@ export default function (studio) {
 
   async function refresh() {
     const roots = (await list('')).sort((a, b) => own(b) - own(a)); // stable: the rest keep the server's order
+    if (open) {
+      // the slides folder changed (the deck's other language, deck/src-pt): the new one opens as the old one was
+      for (const r of roots) if (r.kind === 'slides' && !shown.has(r.path) && [...shown].some((p) => open.has(p))) open.add(r.path);
+    }
     open ??= new Set(roots.filter((r) => (start ? own(r) || r.kind === 'context' : OPEN_FIRST.includes(r.kind))).map((r) => r.path));
+    shown = new Set(roots.filter((r) => r.kind === 'slides').map((r) => r.path));
     tree.replaceChildren(...roots.map((r) => folder(r, r)));
   }
 
@@ -140,5 +146,6 @@ export default function (studio) {
   });
 
   studio.on('chat', (e) => e.kind === 'turn-end' && refresh()); // the agent may have made or changed files
+  studio.on('deck-reload', refresh); // the deck changed language: its slides folder too
   refresh();
 }
