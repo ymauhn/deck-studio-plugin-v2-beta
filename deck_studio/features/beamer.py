@@ -10,6 +10,8 @@ import asyncio
 import os
 import re
 import shutil
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -17,7 +19,7 @@ import pymupdf
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import FileResponse
 
-from deck_studio.beamer import engine
+from deck_studio.beamer import engine, overleaf
 from deck_studio.server.api import ApiError, json_body
 
 router = APIRouter()
@@ -267,6 +269,38 @@ async def open_project(pid: str, request: Request):
     if p.kind == "handwritten" and p.compiled != p.stamp():
         p.full()
     return p.public()
+
+
+@router.post("/api/beamer/projects/{pid}/overleaf")
+async def export_overleaf(pid: str, request: Request):
+    """Exportar para o Overleaf: the deck's zip (beamer/overleaf.py) in the kit's exports/ folder, with the PDF of the
+    last compile of the whole deck (a hand-written deck whose sources changed since compiles first), then the zip
+    compiled again from an empty folder: {zip (kit-relative), files, check: {ok, errors, undefined}}."""
+    state = request.app.state.studio
+    p = project_of(state, pid)
+    view = p.current()
+    if p.kind == "handwritten" and (p.compiled != p.stamp() or not view or view["frame"] is not None):
+        r = await p.full()
+        view = p.current()
+        if not r["ok"] or not view:
+            raise ApiError(409, "not-compiled", "O deck não compila agora: corrija os erros antes de exportar.")
+    if not view:
+        raise ApiError(409, "no-pdf", "Este deck ainda não tem PDF: gere-o antes de exportar.")
+    zip_path, names = await asyncio.to_thread(overleaf.build, p.main, view["pdf"], state.kit_root / "exports", p.work)
+    result = await asyncio.to_thread(overleaf.check, zip_path, p.main.name)
+    return {"zip": zip_path.relative_to(state.kit_root).as_posix(), "files": len(names), "check": result}
+
+
+@router.post("/api/beamer/exports/open")
+async def open_exports(request: Request):
+    """Abrir pasta: the kit's exports/ folder in the system's file manager (only that folder)."""
+    folder = request.app.state.studio.kit_root / "exports"
+    folder.mkdir(exist_ok=True)
+    if sys.platform == "win32":
+        os.startfile(folder)  # a folder of this kit, in Explorer
+    else:
+        subprocess.Popen(["xdg-open", str(folder)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return {"folder": str(folder)}
 
 
 @router.get("/api/beamer/projects/{pid}/pages/{n}")
