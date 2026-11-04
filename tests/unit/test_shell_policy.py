@@ -1,6 +1,14 @@
 """The Autônomo level's shell rule (feedback of 2026-11-04: the deck's own build and QA, and plain reads, still asked).
 The commands below are the ones the agent ran in the author's session of that day, with the kit path as Git Bash
 writes it (/c/Users/...)."""
+import sys
+
+import pytest
+
+# Windows paths (C:\Users\...) as the kit root: the guard's Windows semantics, tested on Windows; Linux has
+# tests/unit/test_plataforma.py::test_the_write_guard_on_posix_paths
+pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Windows paths")
+
 import pytest
 
 from deck_studio.config import nexus_go_config

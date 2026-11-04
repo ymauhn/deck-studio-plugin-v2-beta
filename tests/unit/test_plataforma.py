@@ -112,3 +112,19 @@ def test_the_write_guard_reads_a_windows_short_name_as_its_long_folder(tmp_path)
     guard = create_guard({"kitRoot": str(kit.resolve()), "allowWrite": ["deck/**"], "askWrite": ["qa/*.py"]})
     assert guard.check("Edit", {"file_path": buf.value + "\\qa\\check_deck.py"}, "deck").behavior == "ask"
     assert guard.check("Write", {"file_path": buf.value + "\\deck\\x.html"}, "deck").behavior == "allow"
+
+
+def test_the_write_guard_on_posix_paths(tmp_path):
+    """The guard with this system's own paths (on Linux, /tmp/...): the rules hold, and the path it hands back opens."""
+    from deck_studio.config import generic_config
+    from deck_studio.core.write_guard import create_guard
+    kit = tmp_path / "Projeto"
+    (kit / "deck" / "src" / "slides").mkdir(parents=True)
+    slide = kit / "deck" / "src" / "slides" / "00-title.html"
+    slide.write_text("<section></section>", encoding="utf-8")
+    guard = create_guard(generic_config(kit))
+    assert guard.check("Write", {"file_path": str(slide)}, "deck").behavior == "allow"
+    assert guard.check("Write", {"file_path": str(kit / "deck" / "dist" / "deck.html")}, "deck").behavior == "deny"
+    assert guard.check("Edit", {"file_path": str(kit / "qa" / "check_deck.py")}, "deck").behavior == "ask"
+    assert guard.check("Write", {"file_path": str(tmp_path / "fora.txt")}, "deck").behavior != "allow"
+    assert open(guard.write_path("Write", {"file_path": str(slide)}), encoding="utf-8").read() == "<section></section>"
