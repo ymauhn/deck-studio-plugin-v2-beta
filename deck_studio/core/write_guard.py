@@ -99,7 +99,7 @@ class Guard:
 
     def _check(self, tool_name, tool_input, level):
         if tool_name in WRITE_TOOLS:
-            return self._write(self.write_path(tool_name, tool_input), level)
+            return self._write(self._write_target(tool_name, tool_input), level)
         if tool_name == "Read":
             return self._read(self._target(tool_input.get("file_path")))
         if tool_name in ("Grep", "Glob"):
@@ -123,10 +123,14 @@ class Guard:
             return Decision("allow", "Ferramenta do estúdio.")
         return Decision("ask", "Ferramenta desconhecida: precisa da sua aprovação.")
 
-    def write_path(self, tool_name, tool_input):
-        """The normalized file a write tool call targets; None for other tools or a missing path."""
+    def _write_target(self, tool_name, tool_input):
+        """The file a write tool call targets, normalized as the rules compare it; None for other tools or no path."""
         key = WRITE_TOOLS.get(tool_name)
-        target = self._target(tool_input.get(key)) if key and isinstance(tool_input, dict) else None
+        return self._target(tool_input.get(key)) if key and isinstance(tool_input, dict) else None
+
+    def write_path(self, tool_name, tool_input):
+        """The file a write tool call targets, as this system opens it; None for other tools or a missing path."""
+        target = self._write_target(tool_name, tool_input)
         # the rules compare Windows-style strings; the path a caller opens is the system's own (\tmp\x is /tmp/x)
         return target if target is None or sys.platform == "win32" else target.replace("\\", "/")
 
