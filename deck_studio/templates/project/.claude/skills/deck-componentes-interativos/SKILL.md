@@ -1,6 +1,6 @@
 ---
 name: deck-componentes-interativos
-description: Use ao decidir, escrever ou testar um componente interativo ou animado (deck/src/components/) de um deck do Deck Studio: quando usar, contrato, dados do FACTS, sincronia com os passos e teste isolado.
+description: "Use ao decidir, escrever ou testar um componente interativo ou animado (deck/src/components/) de um deck do Deck Studio: quando usar, contrato, dados do FACTS, sincronia com os passos e teste isolado."
 ---
 
 # Componentes interativos e animados
