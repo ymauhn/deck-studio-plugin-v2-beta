@@ -8,7 +8,7 @@ import pytest
 from playwright.sync_api import expect
 
 from deck_studio.templates import fill_template
-from tests.e2e.conftest import built, deck_of, go_slide, open_studio, run_studio
+from tests.e2e.conftest import built, deck_of, go_slide, open_studio, run_studio, wait_until
 from tests.helpers.kit_copy import PREFIX, remove_kit_copy
 
 FORMULA = """<section class="slide" id="s02" data-part="Método">
@@ -76,6 +76,10 @@ def test_end_goes_to_the_end_of_a_box_that_wraps_not_of_its_first_line(project, 
     editor.press("End")
     page.keyboard.type(" (editado)")
     page.keyboard.press("Enter")
-    expect(page.get_by_role("article").filter(has_text="Texto editado em").last).to_be_visible(timeout=20_000)
-    source = (project.kit / "deck/src/slides/01-formula.html").read_text(encoding="utf-8")
-    assert "quebra em várias linhas (editado)</li>" in source
+    # the previous test's card is also there (cards come back after a reload): wait for this edit in the file itself
+    file = project.kit / "deck/src/slides/01-formula.html"
+    try:
+        wait_until(lambda: "quebra em várias linhas (editado)</li>" in file.read_text(encoding="utf-8"), timeout=20,
+                   message="the edit at the end of the box")
+    except AssertionError:
+        raise AssertionError(f"the box's line in the file: {[ln for ln in file.read_text(encoding='utf-8').splitlines() if 'Mede o' in ln]}") from None

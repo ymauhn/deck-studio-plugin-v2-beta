@@ -24,6 +24,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 from playwright.sync_api import expect
 
+from deck_studio.core import plataforma
 from deck_studio.config import load_config, merge
 from tests.helpers.kit_copy import make_kit_copy, remove_kit_copy, remove_tree
 
@@ -99,13 +100,14 @@ def run_studio(*args, kit=None, env=None, timeout=60):
     proc = subprocess.Popen(
         [sys.executable, "-m", "deck_studio", "--kit", str(kit), "--port", "0", "--data", str(data),
          "--fake-agent", str(SCENARIOS), "--no-open", "--config", str(data / "e2e-config.json"), *args],
-        cwd=ROOT, stdout=subprocess.PIPE, text=True, encoding="utf-8", env={**os.environ, **(env or {})})
+        cwd=ROOT, stdout=subprocess.PIPE, text=True, encoding="utf-8", env={**os.environ, **(env or {})},
+        **plataforma.NEW_GROUP)
     try:
         url = _read_url(proc, timeout)
         u = urlsplit(url)
         yield Studio(url, f"{u.scheme}://{u.netloc}", parse_qs(u.query)["t"][0], kit, data, proc)
     finally:
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        plataforma.kill_tree(proc.pid)
         proc.wait()
         if own_kit:
             remove_kit_copy(kit)

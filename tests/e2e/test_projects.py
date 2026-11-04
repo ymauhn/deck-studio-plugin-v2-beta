@@ -5,7 +5,6 @@ studio of its own, a child process, whose chat starts with the request to build 
 The module's studio is the home (run_studio's data dir). Its --config reaches the children too: the fake agent's
 importMessage starts with #scenario:import-<format>, and new projects go in a temp folder, never in the profile."""
 import json
-import msvcrt
 import os
 import re
 import subprocess
@@ -24,6 +23,7 @@ import pytest
 from playwright.sync_api import expect
 
 from tests.e2e.conftest import deck_of, open_studio, run_studio, wait_until
+from deck_studio.core import plataforma
 from tests.helpers.kit_copy import REAL_KIT, remove_tree
 
 MESSAGE = "#scenario:import-{format} Crie a apresentação a partir de `{pdf}` em {language}. Texto: `{text}`. " \
@@ -254,11 +254,11 @@ def test_opening_a_project_whose_studio_is_still_starting_waits_for_its_url(stud
     # its studio ended with `other`; the test now holds its lock as a studio that starts does (__main__.lock_data_dir)
     lock = studio.data / "projects" / made.json()["project"]["slug"] / "studio.lock"
     url = "http://127.0.0.1:9/?t=starting"
-    fd = os.open(lock, os.O_RDWR | os.O_BINARY)
+    fd = os.open(lock, os.O_RDWR | plataforma.O_BINARY)
     ready = threading.Timer(6, lambda: lock.write_text(url, encoding="utf-8"))
     try:
         os.lseek(fd, 1 << 30, os.SEEK_SET)
-        msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        plataforma.lock_byte(fd)
         os.ftruncate(fd, 0)
         ready.start()
         r = open_project(api, studio, folder)
@@ -653,7 +653,7 @@ def test_a_project_studio_ends_with_the_studio_that_started_it_and_abrir_starts_
         assert r.status == 201, r.text()
         child = launch_url(r.json())
         assert answers(child)
-        subprocess.run(["taskkill", "/F", "/PID", str(parent.proc.pid)], capture_output=True)  # it alone, no /T
+        parent.proc.kill()  # it alone, not its tree
         parent.proc.wait()
         wait_until(lambda: not answers(child), timeout=20, message="the project's studio to end")
         with run_studio("--home", parent.data, kit=parent.kit) as again:  # the same home, after a restart
@@ -667,9 +667,13 @@ def test_a_project_studio_ends_with_the_studio_that_started_it_and_abrir_starts_
 
 APP = Path(__file__).resolve().parents[2]
 PEAK = """import ctypes, sys
-from ctypes import wintypes
 from deck_studio.pdf_import import extract
 extract(sys.argv[1], sys.argv[2])
+if sys.platform != "win32":
+    import resource
+    print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)  # KB on Linux
+    sys.exit()
+from ctypes import wintypes
 class Counters(ctypes.Structure):
     _fields_ = [("cb", wintypes.DWORD), ("faults", wintypes.DWORD), ("peak", ctypes.c_size_t)] + [
         (f"other{i}", ctypes.c_size_t) for i in range(7)]

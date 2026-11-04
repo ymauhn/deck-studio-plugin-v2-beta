@@ -3,6 +3,14 @@
 "ask" (perguntar sempre), "deck" (editar o deck sem perguntar, the default) and "auto" (autônomo). At every level a
 write outside the kit is denied or asks, the protected files stay denied, the deck's own scripts ask, and a shell
 command that looks external (publish, network, git push) or reaches outside the kit asks."""
+import sys
+
+import pytest
+
+# Windows paths (C:\Users\...) as the kit root: the guard's Windows semantics, tested on Windows; Linux has
+# tests/unit/test_plataforma.py::test_the_write_guard_on_posix_paths
+pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Windows paths")
+
 from deck_studio.config import nexus_go_config
 from deck_studio.core.write_guard import LEVELS, create_guard
 
