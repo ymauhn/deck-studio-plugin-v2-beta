@@ -16,7 +16,7 @@ Comandos: `git rev-list --all | xargs git grep -nE <padrão>` (conteúdo de todo
 
 | # | O que | Onde (HEAD de `main`, salvo indicação) | Desde o commit | Peso |
 |---|---|---|---|---|
-| 1 | **GIFs de demonstração com o slide de título da defesa**: nome do autor, do orientador e dos coorientadores, instituição e data da defesa, legíveis | `docs/gifs/1-esforco.gif`, `2-idioma.gif`, `3-autonomia.gif` (frames do meio; conferi o 2 e o 3) | `b1a33cf`, mesclado em `2b79650` | **Alto**: são os únicos dados de terceiros no repositório, e um binário em histórico só sai com reescrita |
+| 1 | **GIFs de demonstração com o slide de título da defesa**: nome do autor, do orientador e dos coorientadores, instituição e data da defesa, legíveis | `docs/gifs/1-esforco.gif`, `2-idioma.gif`, `3-autonomia.gif` (frames do meio; conferi o 2 e o 3) | `b1a33cf`, mesclado em `2b79650` | **Resolvido pela decisão do dono de 04/11** (seção d): o que eles mostram é o mesmo conteúdo que o template vai publicar, então deixam de ser problema de privacidade. Podem ir para o README do plugin |
 | 2 | E-mail pessoal do autor dos commits | os 18 commits (autor; 14 também como committer, 4 com committer `GitHub`) | todos | Médio: fica visível em qualquer clone e na API do GitHub |
 | 3 | Nome completo do dono | `docs/SPEC.md:4`; `tests/unit/test_beamer_engine.py:250` (sobrenome, num caso de teste do título do Beamer) | `b4ef7ee` | Baixo (é o autor), mas sai junto |
 | 4 | Caminhos pessoais (`C:\Users\Yeonatan\…`, `OneDrive\Desktop\nexusgo_deck_kit`) | `deck_studio/__main__.py:29` (`DEFAULT_KIT`); `CLAUDE.md:6,20,55`; `README.md:12,78`; `docs/IMPORT.md:29,31`; `docs/PYTHON.md:47`; `docs/SPEC.md:126,134,138`; `tests/helpers/kit_copy.py:9`; `tests/unit/test_autonomy.py:9,10,42,50,57,66`; `tests/unit/test_generic_config.py:8`; `tests/unit/test_shell_policy.py:10,11,29,48,51,52,57,76,77`; `tests/unit/test_write_guard.py:7,8,50,137,143,144,149`. No histórico também: `.gitignore`, `RELATORIO-23H.md`, `docs/LICENCA-PROPOSTA.md` (branch `publicacao`) | `b4ef7ee` em diante | Baixo: revela o nome de usuário do Windows e a pasta do OneDrive |
@@ -40,6 +40,8 @@ Não achado: senhas, chaves, telefone, CPF; nomes de orientadores **em texto** (
 
 **Recomendação: o método 1.** Ele resolve a limpeza de graça, porque o plugin é outra peça de software. Se o dono quiser também abrir o app atual (só para mostrar o código), use o método 2 numa **cópia espelho** (`git clone --mirror` para um repositório novo), nunca no repositório em uso, e só depois de 16/11.
 
+Com a decisão de 04/11 (seção d), a reescrita deixa de ser necessária por causa dos GIFs; sobram o e-mail e os caminhos pessoais, que o método 1 já evita.
+
 Antes de qualquer abertura, nos dois casos:
 - `git config user.email ymauhn@users.noreply.github.com` no repositório novo (e ativar "Keep my email address private" no GitHub, decisão do dono);
 - trocar `DEFAULT_KIT` e os caminhos dos testes por uma variável (`STUDIO_KIT`, que os testes já leem) ou por um kit de exemplo;
@@ -54,7 +56,7 @@ Antes de qualquer abertura, nos dois casos:
 Recomendo **AGPL-3.0-only** para o plugin, como em `docs/LICENCA-PROPOSTA.md` (branch `publicacao`): o PyMuPDF (`pymupdf==1.28.2`, `pyproject.toml:11`) é AGPL-3.0 ou licença comercial da Artifex, e a AGPL dispensa ressalvas. As outras dependências são MIT, BSD-3 ou Apache-2.0 e são compatíveis. Itens a cuidar:
 - `LICENSE` com o texto oficial da FSF, sem alterações, e um cabeçalho SPDX (`# SPDX-License-Identifier: AGPL-3.0-only`) nos arquivos novos;
 - `THIRD_PARTY.md`: Moveable (MIT, `deck_studio/ui/vendor/moveable.min.js`, manter o aviso no topo do arquivo); as fontes embutidas em `fonts.css` do branch `feat/gerador-v1` (Atkinson Hyperlegible Next, Bricolage Grotesque, IBM Plex Mono: todas SIL OFL 1.1, que pede o aviso de copyright e a licença junto da fonte);
-- o template de demonstração (seção d) tem licença própria: o código do repositório `nexus-go` é MIT e os resultados são CC BY 4.0 (`source/nexus-go/LICENSE`, `LICENSE-DATA` no kit); o texto e as figuras da dissertação não têm licença declarada no kit (pergunta ao dono, seção d).
+- o template de demonstração (seção d) tem licença própria: o código do repositório `nexus-go` é MIT e os resultados são CC BY 4.0 (`source/nexus-go/LICENSE`, `LICENSE-DATA` no kit); o texto e as figuras da dissertação não têm licença declarada no kit; o dono liberou a publicação em 04/11 (seção d), e o template pode levar um aviso "© o autor, uso com atribuição", ou a licença que o dono escolher para o conteúdo.
 
 ### O que muda no README para abrir
 
@@ -105,7 +107,7 @@ deck-studio-plugin/                  marketplace e plugin no mesmo repositório
 │   ├── server/                      pyproject.toml + pacote deck_tools: importar PDF/pasta, build, screenshot, check, export, beamer, editor
 │   └── templates/
 │       ├── projeto-vazio/           o scaffold atual (deck/, beamer/, qa/, docs/)
-│       └── exemplo-nexus-go/        o deck de demonstração (só com o sim do dono, seção d)
+│       └── exemplo-nexus-go/        o deck de demonstração (liberado pelo dono em 04/11, seção d)
 └── LICENSE, README.md, THIRD_PARTY.md
 ```
 
@@ -173,7 +175,11 @@ O total de mudanças é pequeno e concentrado em três funções (`lock_byte`, `
 
 ## d) O deck NEXUS-GO como template pronto dentro do plugin
 
-Ideia: o deck da defesa, na versão atual, vira `templates/exemplo-nexus-go/`, o exemplo "no nível do nosso" que o colega abre para ver o método funcionando. Antes, o dono precisa saber o que isso expõe. Lido no kit (só leitura) em 04/11:
+Ideia: o deck da defesa, na versão atual, vira `templates/exemplo-nexus-go/`, o exemplo "no nível do nosso" que o colega abre para ver o método funcionando.
+
+> **Decisão do dono, 04/11/2026 (repassada pelo orquestrador):** o template com o deck NEXUS-GO **pode expor tudo**: nomes, orientadores e números da dissertação. O deck vai ser publicado de qualquer forma e mostra o uso real. Com isso, as perguntas sobre o que anonimizar, se a dissertação e os dados podem ir, as notas, os agradecimentos e os links ficam respondidas. Os GIFs de `docs/gifs` também deixam de ser problema de privacidade (seção a, item 1).
+
+O inventário abaixo, lido no kit (só leitura) em 04/11, fica como registro do que o template leva:
 
 ### Pessoas, instituição, datas
 - Nome do autor, do orientador e dos dois coorientadores, instituição, curso e data da defesa: `deck/src/slides/00-opening.html:6-8` e `deck/src-pt/slides/00-opening.html:6-8`; `beamer/slides.tex:10-12`; `beamer/nexus-go-defense.tex:14-15` (autor e data); `beamer/academico/nexus-go-academic.tex:19,35,47-52`; `beamer/v2-colegas-pt/nexus-go-v2-pt.tex:96-101`; `docs/FACTS.md:19-27` (§1 inteira); `docs/CONTEXT.md:5-11`.
@@ -198,51 +204,34 @@ Ideia: o deck da defesa, na versão atual, vira `templates/exemplo-nexus-go/`, o
 - Site publicado no Netlify (com `noindex`): `DECISIONS.md:94,167`, `deck/tools/netlify-site.json:4`.
 - Caminhos da máquina do dono, incluindo a pasta com o relatório de plágio e os resultados brutos: `docs/CONTEXT.md:24-33`.
 
-### O que entraria, se o dono aprovar
-Proposta mínima: o deck HTML (EN e PT) e um Beamer, com os dados e figuras de que os slides precisam, **sem** `source/thesis/dissertation.tex`, sem `docs/CONTEXT.md`, sem `DECISIONS.md`/`TODO.md`/`PROMPT.md`, sem os vídeos, sem os logos, sem os `.pdf`/`.zip`/`.log` gerados e sem a ferramenta do Netlify. O `qa/audit_numbers.py` do exemplo passaria a conferir contra `data/thesis_tables.json` em vez do `.tex`.
+### O que entra (decidido)
+O deck HTML (EN e PT), o Beamer, os dados (`data/`, `docs/FACTS.md`), as figuras da tese e as notas do apresentador entram **como estão**, com nomes, orientadores, instituição, datas, números e tabelas, conforme a decisão acima.
 
-### Perguntas ao dono (responder antes de qualquer cópia do kit para o plugin)
+Ficam fora porque não são conteúdo do deck, e não por privacidade:
+- `docs/CONTEXT.md:24-33`, que guarda os caminhos da máquina do dono (incluindo a pasta do relatório de plágio e os resultados brutos); no template, o arquivo leva só o resto;
+- os `.pdf`, `.zip`, `.log` e `.aux` gerados (o template os gera de novo) e a ferramenta do Netlify (`deck/tools/netlify-site.json`, `publish_netlify.ps1`), que publica no site e com a conta do dono;
+- os vídeos `video/*.mp4` e `video-pt/*.mp4`, pelo tamanho. O roteiro `video/script.md` entra.
 
-1. **O deck NEXUS-GO entra no plugin como exemplo?**
-   Opções: (a) sim, completo; (b) sim, anonimizado (ver 2); (c) não: o exemplo é o deck de um artigo arXiv CC-BY (o `deck-demo` da Fase 1).
-   Recomendo (c) no piloto e (a) ou (b) depois de 16/11, se quiser.
-   Por que importa: o exemplo vai para o computador de cada colega e, se o repositório abrir, para qualquer pessoa.
-2. **Nomes e instituição: manter, anonimizar ou trocar por campos (`[autor]`, `[orientador]`, `[instituição]`)?**
-   Opções: (a) manter tudo; (b) manter só o seu nome; (c) trocar tudo por campos.
-   Recomendo (b), com o sim explícito de cada orientador se os nomes deles ficarem.
-   Por que importa: são dados de terceiros; o seu nome você decide sozinho, o deles não.
-3. **A dissertação (`dissertation.tex`) e as figuras dela podem ir?**
-   Opções: (a) o `.tex` e as figuras; (b) só as figuras usadas nos slides; (c) nada da tese.
-   Recomendo (b) se a dissertação já estiver pública no repositório da universidade, senão (c).
-   Por que importa: o texto e as figuras não têm licença declarada no kit, e a versão final ainda pode mudar depois da defesa.
-4. **Os números e tabelas (`data/thesis_tables.json`, `docs/FACTS.md`) podem ir?**
-   Opções: (a) sim; (b) só os que já estão no repositório público `nexus-go` (CC BY 4.0) e no artigo publicado; (c) não.
-   Recomendo (b).
-   Por que importa: resultados ainda não publicados (o artigo aceito sai em dezembro, segundo `docs/FACTS.md:35-42`) poderiam aparecer antes da publicação.
-5. **Agradecimentos e logos (financiadores, instituição)?**
-   Opções: (a) manter; (b) tirar os logos e manter o texto; (c) tirar os dois.
-   Recomendo (c) no exemplo.
-   Por que importa: logos são marcas de terceiros e o agradecimento só faz sentido na defesa real.
-6. **Links: repositório `nexus-go` e o site do Netlify?**
-   Opções: (a) manter os dois; (b) só o repositório (já público); (c) nenhum.
-   Recomendo (b), e deixar o site do Netlify fora.
-   Por que importa: o site tem `noindex` de propósito (`DECISIONS.md:94`); pô-lo num repositório o torna fácil de achar.
-7. **Notas do apresentador e roteiro narrado?**
-   Opções: (a) manter; (b) manter só as notas de método ("um item por passo", "fonte na nota"); (c) tirar.
-   Recomendo (b).
-   Por que importa: as notas são a sua fala da defesa, que a banca ainda não ouviu.
-8. **Repositório do plugin: privado com convite ou público?**
-   Opções: (a) privado, convite a cada colega (exige conta GitHub e `gh auth setup-git`); (b) público.
-   Recomendo (a) no piloto.
-   Por que importa: define quem vê o código e o exemplo, e o que cada colega precisa instalar.
-9. **E-mail nos commits do repositório novo?**
-   Opções: (a) o e-mail atual; (b) `ymauhn@users.noreply.github.com`.
-   Recomendo (b).
-   Por que importa: o e-mail de commit fica em todo clone, para sempre.
-10. **O app atual (`ymauhn/deck-studio`) também abre?**
-    Opções: (a) não, fica privado; (b) sim, depois de 16/11, por `git filter-repo` numa cópia espelho (seção a).
-    Recomendo (a).
-    Por que importa: os GIFs com o slide de título estão no histórico dele e só saem com reescrita.
+Duas observações, sem pedir decisão nova:
+- **Logos** (`beamer/v2-colegas/logos/`) são marcas da instituição. Entram como no deck da defesa; se a instituição restringir o uso fora de trabalhos dela, eles saem numa versão seguinte.
+- **Auditoria de números:** o `qa/audit_numbers.py` do exemplo confere contra `source/thesis/dissertation.tex`, que agora pode ir no template.
+
+### Perguntas ao dono que continuam abertas
+
+1. **Repositório do plugin: privado com convite ou público?**
+   Opções: (a) privado, com convite a cada colega (exige conta GitHub e `gh auth setup-git`); (b) público desde o início.
+   Recomendo (a) no piloto e (b) depois do feedback dos colegas.
+   Por que importa: define quem vê o código e o exemplo, e o que cada colega precisa instalar. O conteúdo do template já está liberado; a pergunta é só sobre o código e o momento.
+2. **Licença do plugin?**
+   Opções: (a) AGPL-3.0; (b) MIT, trocando o PyMuPDF por uma biblioteca permissiva; (c) nenhuma enquanto for privado.
+   Recomendo (a), como na seção b.
+   Por que importa: sem licença, ninguém pode usar o código público; com MIT, o PyMuPDF continuaria impondo a AGPL.
+3. **Colegas e sistemas operacionais?**
+   Pergunta: quem entra no piloto, em que sistema (Windows ou Mac, Intel ou Apple Silicon) e se cada um tem Claude Pro ou acima.
+   Recomendo começar com 2 ou 3 colegas, pelo menos 1 deles no Mac.
+   Por que importa: o código só roda no Windows hoje (tabela da seção c), e o plano de testes depende de haver um Mac.
+
+Recomendações que não pedem resposta (valem se o dono não disser o contrário): e-mail `ymauhn@users.noreply.github.com` nos commits do repositório novo, e o app atual (`ymauhn/deck-studio`) continua privado.
 
 ---
 
@@ -250,19 +239,17 @@ Proposta mínima: o deck HTML (EN e PT) e um Beamer, com os dados e figuras de q
 
 | Etapa | O quê | Quem | Espera |
 |---|---|---|---|
-| 0 | Este plano: o dono lê e responde às perguntas da seção d | dono | — |
+| 0 | Este plano: o dono responde às 3 perguntas abertas da seção d | dono | — |
 | 1 | Fase 1 (gerador) passa no aceite, em `feat/gerador-v1` | sessão do Deck Studio | aceite do dono; os ajustes da apresentação dele |
 | 2 | Portar para POSIX as funções da tabela da seção c (`lock_byte`, `kill_tree`, `NO_WINDOW`, TeX), com testes, num branch do app | sessão de ticket | — (não muda o comportamento no Windows) |
-| 3 | Criar o repositório **privado** `ymauhn/deck-studio-plugin`, e-mail noreply, `LICENSE` AGPL-3.0, README da seção b | orquestrador | **sim do dono**: criar repositório, licença, e-mail |
+| 3 | Criar o repositório `ymauhn/deck-studio-plugin` (privado no piloto), e-mail noreply, `LICENSE`, README da seção b | orquestrador | **sim do dono**: criar o repositório; respostas 1 e 2 |
 | 4 | Montar o plugin: skills da Fase 1, servidor MCP `deck`, hook de guarda, agente juiz, editor visual sem chat, `claude plugin validate` verde | sessão de ticket | — |
-| 5 | Template: `projeto-vazio` sempre; `exemplo-nexus-go` só conforme as respostas 1 a 7 | sessão de ticket | **respostas do dono** |
-| 6 | Teste no Windows do dono e num Mac (um colega ou uma VM; CI `macos-latest` para os testes de unidade) | dono e um colega | lista de colegas e sistemas |
-| 7 | Convidar os colegas ao repositório privado; manual de instalação; formulário de feedback; nota de privacidade | dono | **sim do dono** para cada convite; o formulário é criado pelo dono |
-| 8 | Repetir a varredura da seção a no repositório novo antes de qualquer abertura pública | orquestrador | **sim do dono** para tornar público |
+| 5 | Template: `projeto-vazio` e `exemplo-nexus-go`, este copiado do kit na versão atual, com o conteúdo completo (decisão de 04/11) menos o que a seção d deixa de fora; os GIFs de `docs/gifs` podem ir para o README do plugin | sessão de ticket | o dono terminar os ajustes da apresentação (o template copia a versão final) |
+| 6 | Teste no Windows do dono e num Mac (um colega ou uma VM; CI `macos-latest` para os testes de unidade) | dono e um colega | resposta 3 |
+| 7 | Convidar os colegas; manual de instalação; formulário de feedback; nota de privacidade | dono | **sim do dono** para cada convite; o formulário é criado pelo dono |
+| 8 | Repetir a varredura da seção a no repositório novo (agora atrás de caminhos pessoais, e-mail e segredos, já que nomes e dados da tese estão liberados) antes de tornar público | orquestrador | **sim do dono** para tornar público |
 
 ### O que espera o dono
-- Respostas às perguntas 1 a 10 da seção d.
-- Licença AGPL-3.0 (recomendada) para o plugin.
-- Criar o repositório privado novo e o e-mail noreply.
-- A lista de colegas, os sistemas deles (Windows ou Mac) e se cada um tem Claude Pro ou acima.
+- As 3 perguntas abertas da seção d: repositório público ou privado, licença, colegas e sistemas.
+- O sim para criar o repositório novo.
 - Nada disso pede deploy nem gasto fora da assinatura.
