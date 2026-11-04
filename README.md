@@ -83,6 +83,7 @@ Depois:
 
 - **Editar:** como no deck da defesa, com seleção, chat, edição no lugar e **Desfazer**.
 - **HTML:** **Exportar PDF** grava `deck/dist/deck.pdf`, na pasta do projeto.
+- **Publicar um projeto:** **Cadastrar link de publicação** liga o projeto a um site do Netlify, um que já existe na sua conta ou um novo com o nome que você der. O login é o da Netlify CLI desta máquina (`npx netlify login`). Depois, **Publicar** aparece na barra, com a mesma confirmação do deck da defesa, e o site sai com noindex. O link fica em `deck/tools/netlify-site.json`.
 - **Beamer:** o projeto abre na versão Beamer, com a pasta `beamer/apresentacao` aberta em **Arquivos**, e recompila a cada mudança no `.tex`. **Abrir PDF** mostra o PDF da última compilação, e **Exportar para Overleaf** grava um `.zip` em `exports/` e mostra o caminho completo dele no registro da tarefa.
 - **Autor, instituição e evento:** o que nem o PDF nem as suas instruções dizem fica marcado nos slides, como `[autor]`, `[instituição]` e `[evento e data]`, para você preencher. O agente avisa no resumo.
 - **Voltar a um projeto:** **Projetos**, depois **Abrir**. Cada projeto roda num studio próprio, na sua aba, e fecha junto com o Deck Studio. **Remover** só tira o projeto da lista; nada sai do disco.

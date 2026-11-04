@@ -41,7 +41,7 @@ def test_a_kit_with_a_studio_json_gets_the_generic_config_and_its_own_project(pr
     # the jobs of the format the author chose: the Overleaf zip of the untouched Beamer template is not one of them
     assert status_of(project, api)["project"] == {
         "title": TITLE, "format": "html", "startMode": "html", "beamerStart": "beamer/apresentacao/apresentacao.tex",
-        "provenance": False, "jobs": ["export-pdf"]}
+        "provenance": False, "jobs": ["export-pdf"], "registerSite": True}
 
 
 def test_a_beamer_project_starts_in_beamer_mode(api):
@@ -85,7 +85,8 @@ def origem(page):
 
 def test_its_studio_has_no_origem_button_and_one_button_per_job_of_its_own(project, page):
     open_studio(page, project)  # the features have loaded
-    expect(job_buttons(page)).to_have_text(["Exportar PDF"])
+    # no site yet: Publicar is not there, and the studio offers to register one (test_publish_site.py)
+    expect(job_buttons(page)).to_have_text(["Exportar PDF", "Cadastrar link de publicação"])
     expect(origem(page)).to_have_count(0)
 
 
@@ -182,7 +183,7 @@ def test_a_project_opened_by_hand_never_runs_on_the_default_kits_data_dir(tmp_pa
 def test_the_nexus_go_studio_describes_its_project_in_api_status(studio, api):
     assert status_of(studio, api)["project"] == {
         "title": "NEXUS-GO", "format": "html", "startMode": "html", "beamerStart": None, "provenance": True,
-        "jobs": ["export-pdf", "publish", "beamer"]}
+        "jobs": ["export-pdf", "publish", "beamer"], "registerSite": False}
 
 
 def test_the_nexus_go_studio_keeps_its_origem_button_and_its_jobs_in_their_order_and_names_its_tab(studio_page):
