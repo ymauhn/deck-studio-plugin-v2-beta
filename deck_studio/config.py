@@ -10,6 +10,13 @@ import time
 from pathlib import Path
 
 
+# the kit's deck/tools/export_pdf.py, run on the Portuguese deck: it is loaded as is and its SRC is replaced
+EXPORT_PT = ("import importlib.util as u; s = u.spec_from_file_location('export_pdf', 'deck/tools/export_pdf.py'); "
+             "m = u.module_from_spec(s); s.loader.exec_module(m); "
+             "m.SRC = (m.ROOT / 'deck' / 'dist' / 'nexus-go-defesa-pt.html').as_uri(); "
+             "m.main(m.ROOT / 'deck' / 'dist' / 'nexus-go-defesa-pt.pdf')")
+
+
 def nexus_go_config(kit):
     clean_build = ["node", "deck/build.mjs"]
     user_skills = str(Path.home() / ".claude" / "skills")
@@ -27,14 +34,33 @@ def nexus_go_config(kit):
         "fontsCss": "deck/build/fonts.css",
         # beamer/academico is the hand-written Beamer deck; its tables.tex is generated (gen_tables.py), and
         # latexmk runs a latexmkrc in the folder it compiles in as Perl
-        "allowWrite": ["deck/src/**", "context/**", ".claude/skills/**", "beamer/academico/**"],
+        "allowWrite": ["deck/src/**", "deck/src-pt/**", "context/**", ".claude/skills/**", "beamer/academico/**"],
         "denyWrite": ["source/**", "data/**", "beamer/slides.tex", "beamer/academico/tables.tex",
                       "beamer/academico/latexmkrc", "beamer/academico/.latexmkrc", "deck/dist/**", "deck/build/**"],
         # the studio deck runs only the scripts of the shell (CSP hashes from the studio build): the code they are built
         # from changes with the author's approval
-        "askWrite": ["deck/src/*.js", "deck/src/*.mjs", "deck/src/*.cjs", "deck/src/shell.html"],
+        "askWrite": ["deck/src/*.js", "deck/src/*.mjs", "deck/src/*.cjs", "deck/src/shell.html",
+                     "deck/src-pt/*.js", "deck/src-pt/*.mjs", "deck/src-pt/*.cjs", "deck/src-pt/shell.html"],
         "askWriteDirs": [user_skills],
         "readDirs": [user_skills],
+        # the Portuguese deck is a tree of its own, deck/src-pt (build.mjs --pt -> deck/dist/nexus-go-defesa-pt.html);
+        # with PT on screen (features/language.py) these keys replace the base ones. The kit's export_pdf.py reads the
+        # English file only, so the PT export runs it with its SRC pointed at the Portuguese one (no kit change)
+        "languageTrees": {"pt": {
+            "slidesDir": "deck/src-pt/slides",
+            "studioBuild": ["node", "deck/build.mjs", "--studio", "--pt"],
+            "partBuild": ["node", "deck/build.mjs", "--studio", "--pt", "--part"],
+            "cleanBuild": [*clean_build, "--pt"],
+            "otherCleanBuilds": [clean_build],
+            "jobs": {
+                "export-pdf": [[*clean_build, "--pt"], ["python", "-I", "-u", "-c", EXPORT_PT]],
+                # the site has both decks (English at /, Portuguese at /pt): both are built fresh
+                "publish": [clean_build, [*clean_build, "--pt"],
+                            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                             "deck/tools/publish_netlify.ps1"]],
+            },
+            "jobOutputs": {"export-pdf": "deck/dist/nexus-go-defesa-pt.pdf"},
+        }},
         # -u: Python prints reach the job's live log as they happen, not when the tool exits
         "jobs": {
             "export-pdf": [clean_build, ["python", "-I", "-u", "deck/tools/export_pdf.py"]],

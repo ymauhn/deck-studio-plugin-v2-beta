@@ -1,9 +1,24 @@
-"""Pedido 2 (2026-11-04): the deck in English and in Portuguese, a switch between the two copies, and the request
-that asks the agent for the translation. Tests run in order: the Portuguese copy appears after the first ones."""
+"""Pedido 2 (2026-11-04), the copy layout: a kit with no Portuguese tree (deck/src-pt), where the agent's translation
+makes deck/src/i18n/pt/ and the switch copies it in. Tests run in order: the copy appears after the first ones.
+The tree layout (NEXUS-GO's deck/src-pt) is in test_language_tree.py."""
+import shutil
+
 import pytest
 from playwright.sync_api import expect
 
-from tests.e2e.conftest import built, deck_of, wait_until
+from tests.e2e.conftest import built, deck_of, run_studio, wait_until
+from tests.helpers.kit_copy import make_kit_copy, remove_kit_copy
+
+
+@pytest.fixture(scope="module")
+def studio():
+    kit = make_kit_copy()
+    shutil.rmtree(kit / "deck" / "src-pt", ignore_errors=True)
+    try:
+        with run_studio(kit=kit) as s:
+            yield s
+    finally:
+        remove_kit_copy(kit)
 
 EN_TEXT = "Network-Extended Unified Sequence Embeddings"
 PT_TEXT = "Embeddings de Sequência Unificados e Estendidos por Rede"
@@ -63,7 +78,8 @@ def test_the_switch_shows_the_portuguese_copy_and_comes_back_to_the_same_english
 
     portuguese.click()
     expect(portuguese).to_have_attribute("aria-checked", "true")
-    expect(page.get_by_role("button", name="Traduzir para inglês")).to_be_visible()
+    # English is the base language: the agent is never asked to translate back to it
+    expect(page.get_by_role("button", name="Traduzir para inglês")).to_be_hidden()
     expect(deck_of(page).get_by_text(PT_TEXT)).to_be_visible()
     built(studio, api)
     assert PT_TEXT in (slides(studio) / "00-opening.html").read_text(encoding="utf-8")

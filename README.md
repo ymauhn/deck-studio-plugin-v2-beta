@@ -26,10 +26,12 @@ São três painéis: **Arquivos**, **Deck** e **Chat**.
 - **HTML | Beamer:** troca para a versão Beamer.
   - Na versão acadêmica (`beamer/academico`), um clique num frame mostra a fonte LaTeX dele.
   - Para salvar a fonte, use Ctrl+S: o frame recompila.
+  - A compilação usa o `latexmk`, que precisa do Perl. O app procura um no PATH, no Git for Windows e no Strawberry Perl. Sem nenhum, compila com `pdflatex`, `bibtex` ou `biber` e o `pdflatex` mais duas vezes, e um erro diz o que instalar.
 - **Idioma (EN | PT):** alterna o deck entre a versão em inglês e a em português.
-  - **Traduzir para …** pede ao agente, no chat, a cópia no outro idioma, em `deck/src/i18n/<idioma>/`. É um pedido como os outros, com **Ver diff** e **Desfazer**.
-  - A versão na tela é a que o build, **Exportar PDF** e **Publicar** usam. Cada idioma guarda uma cópia em `deck/src/i18n/<idioma>/`.
-  - Não dá para trocar o idioma durante um pedido. O **Desfazer** de um pedido antigo só funciona com o deck de volta no idioma daquele pedido.
+  - **No deck da defesa,** o português é a árvore `deck/src-pt` do kit (`node deck/build.mjs --pt`). Com **PT**, o app mostra, seleciona e edita os arquivos de `deck/src-pt`, e **Arquivos** lista `deck/src-pt/slides`. **Exportar PDF** grava `deck/dist/nexus-go-defesa-pt.pdf`, e **Publicar** atualiza as duas versões do site.
+  - **Num deck sem a versão em português,** **Traduzir para …** pede ao agente, no chat, a cópia em `deck/src/i18n/<idioma>/`. É um pedido como os outros, com **Ver diff** e **Desfazer**, e a chave passa a trocar entre as cópias.
+  - A versão na tela é a que o build, **Exportar PDF** e **Publicar** usam, e a escolha continua depois de fechar o app.
+  - Não dá para trocar o idioma durante um pedido.
 
 ### Chat
 
