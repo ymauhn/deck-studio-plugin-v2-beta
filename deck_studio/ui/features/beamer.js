@@ -76,7 +76,40 @@ export default function beamer(studio) {
   const pdf = make('a', {
     className: 'btn', textContent: 'Abrir PDF', title: 'Abre o PDF da última compilação do deck', target: '_blank', rel: 'noopener', hidden: true,
   });
-  bar.append(status, pdf, regenerate);
+  // Exportar para o Overleaf: the zip in exports/, with the last compile's PDF, checked by compiling a copy alone
+  const exported = make('p', { className: 'beamer-export', hidden: true });
+  exported.setAttribute('aria-live', 'polite');
+  const overleaf = make('button', {
+    type: 'button', className: 'btn', textContent: 'Exportar para o Overleaf',
+    title: 'Gera o .zip com o .tex, a bibliografia, as figuras e o PDF da última compilação, pronto para subir no Overleaf',
+    async onclick() {
+      overleaf.disabled = true;
+      folder.hidden = true;
+      exported.hidden = false;
+      exported.replaceChildren(make('progress'), 'Exportando e conferindo o zip (uma cópia compila sozinha)…');
+      const { status: code, data } = await studio.api(`/api/beamer/projects/${project.id}/overleaf`, {});
+      overleaf.disabled = false;
+      if (code !== 200) {
+        exported.hidden = true;
+        return studio.ui.toast(data?.message ?? `A exportação falhou (erro ${code}).`, 'error');
+      }
+      const c = data.check;
+      const problems = [...c.errors, ...c.undefined.map((u) => `${u} indefinido`)];
+      exported.textContent = c.ok
+        ? `${data.zip}: ${data.files} arquivos; uma cópia compilou sozinha, sem nenhum [?].`
+        : `${data.zip} saiu, mas a cópia sozinha não compilou limpa: ${problems.slice(0, 3).join('; ')}`;
+      folder.hidden = false;
+      if (!c.ok) studio.ui.toast('O zip saiu, mas a conferência achou problemas.', 'error');
+    },
+  });
+  const folder = make('button', {
+    type: 'button', className: 'btn', textContent: 'Abrir pasta', title: 'Abre a pasta exports/ do projeto', hidden: true,
+    async onclick() {
+      const { status: code, data } = await studio.api('/api/beamer/exports/open', {});
+      if (code !== 200) studio.ui.toast(data?.message ?? `A pasta não abriu (erro ${code}).`, 'error');
+    },
+  });
+  bar.append(status, pdf, overleaf, folder, exported, regenerate);
   document.querySelector('.deck-bar').append(bar);
 
   // ---------- projects ----------
