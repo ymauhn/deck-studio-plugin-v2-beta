@@ -1,6 +1,6 @@
 ---
 name: deck-pt-br
-description: Use ao escrever, traduzir ou revisar a versão em português (PT-BR) de um deck do Deck Studio: separadores numéricos, itálico, glossário, calques, títulos e paridade com a versão em inglês.
+description: "Use ao escrever, traduzir ou revisar a versão em português (PT-BR) de um deck do Deck Studio: separadores numéricos, itálico, glossário, calques, títulos e paridade com a versão em inglês."
 ---
 
 # Deck em português do Brasil

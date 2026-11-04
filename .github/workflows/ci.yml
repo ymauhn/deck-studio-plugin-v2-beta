@@ -26,3 +26,33 @@ jobs:
         run: uv run playwright install --with-deps chromium
       - name: Tests
         run: uv run pytest -q -p no:cacheprovider tests/unit tests/e2e
+
+  plugin:
+    # the Claude Code plugin (plugin/, etapa 4): in step with deck_studio, its MCP server over stdio, its manifests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: plugin/ made by scripts/montar_plugin.py
+        run: uv run --no-project python scripts/montar_plugin.py --check
+      - name: MCP server smoke test (stdio)
+        working-directory: plugin/plugins/deck-studio/server
+        run: |
+          uv sync --locked
+          uv run playwright install --with-deps chromium
+          uv run python tests/fumaca.py
+      - name: claude plugin validate
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate plugin
+          claude plugin validate plugin/plugins/deck-studio

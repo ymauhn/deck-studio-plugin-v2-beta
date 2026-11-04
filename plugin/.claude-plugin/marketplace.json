@@ -1,6 +1,9 @@
 {
   "name": "ymauhn-deck",
-  "owner": {"name": "ymauhn"},
+  "owner": {
+    "name": "ymauhn"
+  },
+  "description": "Deck Studio: apresentações (HTML e Beamer) a partir de artigos, com método, QA e juiz.",
   "plugins": [
     {
       "name": "deck-studio",
