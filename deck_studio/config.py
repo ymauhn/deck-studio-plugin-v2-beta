@@ -155,6 +155,16 @@ def generic_config(kit, fmt="html"):
     }
 
 
+def with_publish(config):
+    """A project with a registered Netlify site (deck/tools/netlify-site.json, written by "Cadastrar link de
+    publicação") publishes like the NEXUS-GO kit: the clean build, then deck/tools/publish_netlify.py."""
+    if config.get("format") == "html" and (Path(config["kitRoot"]) / "deck/tools/netlify-site.json").is_file():
+        config["jobs"] = {**config["jobs"], "publish": [config["cleanBuild"],
+                                                        [sys.executable, "-I", "-u", "deck/tools/publish_netlify.py"]]}
+        config["publishSite"] = "deck/tools/netlify-site.json"
+    return config
+
+
 def merge(a, b):
     """Dicts merge key by key; lists and scalars in b replace a."""
     if isinstance(a, dict) and isinstance(b, dict):
@@ -167,7 +177,7 @@ def load_config(kit, config_path=None):
     own = Path(kit) / "studio.json"
     if own.is_file():
         project = json.loads(own.read_text(encoding="utf-8-sig"))
-        config = merge(generic_config(kit, project.get("format")), project)
+        config = with_publish(merge(generic_config(kit, project.get("format")), project))
     else:
         config = nexus_go_config(kit)
     if config_path:
