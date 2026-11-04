@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "mcp": "add_image", "input": { "contextFile": "figura-pt.png" } },
+    { "say": "{{result}}" }
+  ]
+}

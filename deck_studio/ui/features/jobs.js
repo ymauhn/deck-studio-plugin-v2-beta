@@ -48,9 +48,10 @@ export default function (studio) {
 
   // publishing goes out to the web: ask first, naming the site once the kit knows it
   async function publish() {
-    const url = (await studio.api('/api/jobs/site')).data?.url;
+    const { url, paths = ['/'] } = (await studio.api('/api/jobs/site')).data ?? {};
     const where = url ? `em ${url}` : 'no Netlify';
-    if (await studio.ui.confirm(`Publicar o deck ${where}? Quem abrir o link passa a ver esta versão.`)) start('publish', { confirm: true });
+    const both = paths.length > 1 ? ` As duas versões vão juntas: ${paths.join(' e ')}.` : '';
+    if (await studio.ui.confirm(`Publicar o deck ${where}?${both} Quem abrir o link passa a ver esta versão.`)) start('publish', { confirm: true });
   }
 
   // one card per job name: a new run replaces the card of the previous one and opens the drawer

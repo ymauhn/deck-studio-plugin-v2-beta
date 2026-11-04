@@ -93,3 +93,49 @@ def test_the_kits_v2_decks_compile_without_any_unresolved_citation(tmp, folder, 
     result = engine.compile({"kind": "handwritten", "main": str(project / name)}, tmp / "work", perl=perl)
     assert result["ok"], result["errors"][:3]
     assert "[?]" not in text_of(result["pdf"])
+
+
+def test_without_perl_a_bibliography_inside_an_input_file_still_gets_its_citations(tmp):
+    """The tool comes from the first pass's .aux (\\bibdata), not only from the main file's text (review of PR #3)."""
+    project = tmp / "deck"
+    shutil.copytree(FIXTURE, project)
+    main = project / "cite.tex"
+    text = main.read_text(encoding="utf-8")
+    block = "  \\bibliographystyle{abbrv}\n  \\bibliography{references}\n"
+    assert block in text
+    (project / "refs-part.tex").write_text(block, encoding="utf-8")
+    main.write_text(text.replace(block, "  \\input{refs-part}\n"), encoding="utf-8")
+    result = engine.compile({"kind": "handwritten", "main": str(main)}, tmp / "work", perl=None)
+    assert result["ok"], result["errors"]
+    text = text_of(result["pdf"])
+    assert "[?]" not in text and "[1]" in text and "Kipf" in text
+
+
+def test_without_perl_a_failed_bibtex_fails_the_compile_and_says_so(tmp):
+    """A bibtex error (here, a style file that does not exist): the PDF exists, but with [?], so the compile is not
+    ok. TeX Live's bibtex exits with 2 on it, MiKTeX's with 1."""
+    project = tmp / "deck"
+    shutil.copytree(FIXTURE, project)
+    main = project / "cite.tex"
+    main.write_text(main.read_text(encoding="utf-8").replace("{abbrv}", "{estilo-que-nao-existe}"), encoding="utf-8")
+    result = engine.compile({"kind": "handwritten", "main": str(main)}, tmp / "work", perl=None)
+    assert not result["ok"]
+    assert result["errors"][0]["message"] == engine.NO_PERL
+    assert any("bibtex falhou" in e["message"] for e in result["errors"])
+
+
+def test_the_authors_own_bibinputs_is_kept_after_the_decks_folder(tmp, monkeypatch):
+    """A .bib on the author's BIBINPUTS is still found (review of PR #3: the studio replaced the variable)."""
+    shared = tmp / "shared bibs"
+    shared.mkdir()
+    project = tmp / "deck"
+    shutil.copytree(FIXTURE, project)
+    (project / "references.bib").rename(shared / "references.bib")
+    monkeypatch.setenv("BIBINPUTS", str(shared))
+    result = engine.compile({"kind": "handwritten", "main": str(project / "cite.tex")}, tmp / "work", perl=None)
+    assert result["ok"], result["errors"]
+    assert "[?]" not in text_of(result["pdf"])
+
+
+def test_perl_is_not_taken_from_a_folder_at_the_root_of_c():
+    assert not any(p.lower().startswith("c:\\strawberry") for p in engine.PERL_PLACES)

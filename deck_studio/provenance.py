@@ -26,11 +26,12 @@ NOT_SHOWN = re.compile(r'<aside class="notes"[^>]*>.*?</aside>|<div class="m d">
 MAX_SOURCES = 5
 
 
-def build_index(kit_root):
-    """{"slides": {id: [{"number", "sources", "reason"}]}}; rebuilt only when an input file changes. Do not mutate it."""
+def build_index(kit_root, slides=SLIDES):
+    """{"slides": {id: [{"number", "sources", "reason"}]}}; rebuilt only when an input file changes. Do not mutate it.
+    `slides` is the slides folder on screen (deck/src-pt/slides with the Portuguese deck)."""
     kit = Path(kit_root)
-    files = [kit / TEX, kit / AUDIT, *sorted((kit / SLIDES).glob("*.html"))]
-    return _build(kit, tuple(map(_stamp, files)))
+    files = [kit / TEX, kit / AUDIT, *sorted((kit / slides).glob("*.html"))]
+    return _build(kit, slides, tuple(map(_stamp, files)))
 
 
 def _stamp(path):
@@ -48,7 +49,7 @@ def snippet(line, start, end, pad=60):
 
 
 @lru_cache(maxsize=4)
-def _build(kit, _stamps):
+def _build(kit, slides_dir, _stamps):
     lines = [re.sub(r"(\d)\\,(\d)", r"\1\2", line.replace("{,}", ","))
              for line in (kit / TEX).read_text(encoding="utf8").split("\n")]
     # canon -> {line: span of the first match there}: the numbers of their own in the text of each line, and
@@ -79,7 +80,7 @@ def _build(kit, _stamps):
         return {"number": number, "sources": sources, "reason": None if sources else reasons.get(number)}
 
     slides = {}
-    for part in sorted((kit / SLIDES).glob("*.html")):
+    for part in sorted((kit / slides_dir).glob("*.html")):
         for attrs, body in SECTION.findall(part.read_text(encoding="utf8")):
             if sid := re.search(r'\sid="([^"]+)"', attrs):
                 text = html.unescape(TAG.sub(" ", NOT_SHOWN.sub(" ", body)))

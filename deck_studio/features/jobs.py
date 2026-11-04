@@ -53,6 +53,10 @@ async def run_lines(state, argv, on_line):
 
 
 async def run_job(state, job_id, name, commands):
+    # what this run needs from the config, read once: the deck's language may change while it runs
+    cleans = [state.config.get("cleanBuild"), *state.config.get("otherCleanBuilds", [])]
+    out = state.config["jobOutputs"].get(name)
+    export_dir = Path(state.config["jobOutputs"].get("export-pdf", "deck/dist/x.pdf")).parent
     def say(**e):
         return state.events.publish("job", id=job_id, name=name, **e)
 
@@ -63,7 +67,7 @@ async def run_job(state, job_id, name, commands):
         for argv in commands:
             await say(state="running", line="> " + subprocess.list2cmdline(argv))
             # the clean build writes deck/build as the studio builds do: it takes their turn, never runs beside one
-            clean = argv == state.config.get("cleanBuild") or argv in state.config.get("otherCleanBuilds", [])
+            clean = argv in cleans
             async with state.builder.lock if clean else contextlib.nullcontext():
                 code = await run_lines(state, argv, lambda line: say(state="running", line=line))
             if code != 0:  # the commands after a failed one never run
@@ -76,10 +80,9 @@ async def run_job(state, job_id, name, commands):
     finally:
         running(state).pop(name, None)
     end = {"state": "ok" if ok else "error", "ms": round((time.perf_counter() - t0) * 1000)}
-    out = state.config["jobOutputs"].get(name)
     if ok and out and (state.kit_root / out).is_file():
         end["file"] = out
-        if dist_pdf(state, out):
+        if Path(out).parent == export_dir and Path(out).suffix.lower() == ".pdf":
             end["url"] = f"/api/jobs/files/{quote(out)}"
     await say(**end)
 
@@ -118,7 +121,7 @@ def site(request: Request):
         url = json.loads((state.kit_root / state.config["publishSite"]).read_text(encoding="utf-8-sig"))["url"]
     except (OSError, ValueError, KeyError, TypeError):
         url = None
-    return {"url": url}
+    return {"url": url, "paths": state.config.get("publishPaths", ["/"])}
 
 
 @router.get("/api/jobs/files/{path:path}")

@@ -19,6 +19,11 @@ EXPORT_PT = ("import importlib.util as u; s = u.spec_from_file_location('export_
 
 def nexus_go_config(kit):
     clean_build = ["node", "deck/build.mjs"]
+    clean_pt = [*clean_build, "--pt"]
+    publish = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "deck/tools/publish_netlify.ps1"]
+    # publish_netlify.ps1 puts the Portuguese deck at /pt when deck/dist has one: with the tree in the kit, every
+    # publish builds it fresh too, whatever language is on screen (an old /pt went up with EN on screen, 04/11)
+    has_pt = (Path(kit) / "deck" / "src-pt" / "slides").is_dir()
     user_skills = str(Path.home() / ".claude" / "skills")
     return {
         "kitRoot": str(Path(kit).resolve()),
@@ -36,11 +41,17 @@ def nexus_go_config(kit):
         # latexmk runs a latexmkrc in the folder it compiles in as Perl
         "allowWrite": ["deck/src/**", "deck/src-pt/**", "context/**", ".claude/skills/**", "beamer/academico/**"],
         "denyWrite": ["source/**", "data/**", "beamer/slides.tex", "beamer/academico/tables.tex",
-                      "beamer/academico/latexmkrc", "beamer/academico/.latexmkrc", "deck/dist/**", "deck/build/**"],
+                      "beamer/academico/latexmkrc", "beamer/academico/.latexmkrc", "deck/dist/**", "deck/build/**",
+                      "deck/node_modules/**"],
         # the studio deck runs only the scripts of the shell (CSP hashes from the studio build): the code they are built
         # from changes with the author's approval
         "askWrite": ["deck/src/*.js", "deck/src/*.mjs", "deck/src/*.cjs", "deck/src/shell.html",
-                     "deck/src-pt/*.js", "deck/src-pt/*.mjs", "deck/src-pt/*.cjs", "deck/src-pt/shell.html"],
+                     "deck/src-pt/*.js", "deck/src-pt/*.mjs", "deck/src-pt/*.cjs", "deck/src-pt/shell.html",
+                     # what the studio runs: the build, the job tools and their settings, the packages, and what
+                     # Claude Code reads as instructions or settings (at every autonomy level; review of PR #3)
+                     "deck/build.mjs", "deck/package.json", "deck/package-lock.json", "deck/tools/**", "tools/**",
+                     "beamer/tools/**", "CLAUDE.md", "**/CLAUDE.md", "AGENTS.md", ".claude/settings.json",
+                     ".claude/settings.local.json"],
         "askWriteDirs": [user_skills],
         "readDirs": [user_skills],
         # the Portuguese deck is a tree of its own, deck/src-pt (build.mjs --pt -> deck/dist/nexus-go-defesa-pt.html);
@@ -48,29 +59,28 @@ def nexus_go_config(kit):
         # English file only, so the PT export runs it with its SRC pointed at the Portuguese one (no kit change)
         "languageTrees": {"pt": {
             "slidesDir": "deck/src-pt/slides",
+            "imagesDir": "deck/src-pt/img",  # build.mjs --pt takes a slide's own images from deck/src-pt/img
             "studioBuild": ["node", "deck/build.mjs", "--studio", "--pt"],
             "partBuild": ["node", "deck/build.mjs", "--studio", "--pt", "--part"],
-            "cleanBuild": [*clean_build, "--pt"],
+            "cleanBuild": clean_pt,
             "otherCleanBuilds": [clean_build],
             "jobs": {
-                "export-pdf": [[*clean_build, "--pt"], ["python", "-I", "-u", "-c", EXPORT_PT]],
-                # the site has both decks (English at /, Portuguese at /pt): both are built fresh
-                "publish": [clean_build, [*clean_build, "--pt"],
-                            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-                             "deck/tools/publish_netlify.ps1"]],
+                "export-pdf": [clean_pt, ["python", "-I", "-u", "-c", EXPORT_PT]],
+                "publish": [clean_build, clean_pt, publish],  # the site has both decks: both are built fresh
             },
             "jobOutputs": {"export-pdf": "deck/dist/nexus-go-defesa-pt.pdf"},
         }},
         # -u: Python prints reach the job's live log as they happen, not when the tool exits
         "jobs": {
             "export-pdf": [clean_build, ["python", "-I", "-u", "deck/tools/export_pdf.py"]],
-            "publish": [clean_build, ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
-                                      "-File", "deck/tools/publish_netlify.ps1"]],
+            "publish": [clean_build, clean_pt, publish] if has_pt else [clean_build, publish],
             "beamer": [["python", "-I", "-u", "-X", "utf8", "beamer/tools/build.py"]],
         },
         # the PDF each job writes; /api/jobs/files serves the PDFs in the export's folder
         "jobOutputs": {"export-pdf": "deck/dist/nexus-go-defense.pdf", "beamer": "beamer/nexus-go-defense.pdf"},
+        "otherCleanBuilds": [clean_pt] if has_pt else [],  # they write deck/build too: they take the build lock
         "publishSite": "deck/tools/netlify-site.json",  # {url} of the site that publish updates, once it exists
+        "publishPaths": ["/", "/pt"] if has_pt else ["/"],  # what Publicar updates, named in its confirmation
         # the project, as GET /api/status describes it to the UI
         "title": "NEXUS-GO",
         "format": "html",

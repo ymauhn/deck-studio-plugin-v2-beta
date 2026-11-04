@@ -31,7 +31,9 @@ def test_ask_always_asks_even_for_a_slide_edit():
 def test_deck_edits_any_unprotected_kit_file_without_asking():
     assert write("deck\\src\\slides\\03-data.html", "deck") == "allow"
     assert write("README.md", "deck") == "allow"
-    assert write("deck\\package.json", "deck") == "allow"
+    assert write("docs\\notas.md", "deck") == "allow"
+    # the packages the build installs are code the studio runs: they ask (review of PR #3)
+    assert write("deck\\package.json", "deck") == "ask"
 
 
 def test_deck_still_asks_for_shell_web_and_reads_outside_the_kit():
