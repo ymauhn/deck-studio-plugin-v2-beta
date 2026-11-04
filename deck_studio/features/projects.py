@@ -224,6 +224,7 @@ async def import_files(request: Request, name: str = "", format: str = "", langu
             taken.add(out)
             extracted[pdf] = out
             infos.append(await projects.extract(target / "context" / pdf, target / "context" / out))
+        projects.point_to_sources(target, slug, extracted)
         return infos
 
     def message(slug, scanned):
