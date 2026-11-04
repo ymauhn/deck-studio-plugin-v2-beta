@@ -235,7 +235,7 @@ def test_the_overleaf_job_zips_the_beamer_deck_without_its_build_files(project):
     r = job(project, "tools/overleaf_zip.py")
 
     # the job's log (Tarefas) names the zip by its whole path, accents included, with the slug as fill_template wrote it
-    assert str(project / "exports" / "analise-cia-100-x-overleaf.zip") in r.stdout
+    assert str((project / "exports" / "analise-cia-100-x-overleaf.zip").resolve()) in r.stdout
     with zipfile.ZipFile(project / "exports/analise-cia-100-x-overleaf.zip") as z:
         assert sorted(z.namelist()) == ["apresentacao.tex", "figures/p003-1.png", "latexmkrc"]
         assert z.read("apresentacao.tex") == (beamer / "apresentacao.tex").read_bytes()

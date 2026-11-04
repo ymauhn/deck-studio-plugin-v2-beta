@@ -1,4 +1,12 @@
 """The write rules of a project made by Deck Studio (generic_config, docs/IMPORT.md "Config"), through the guard."""
+import sys
+
+import pytest
+
+# Windows paths (C:\Users\...) as the kit root: the guard's Windows semantics, tested on Windows; Linux has
+# tests/unit/test_plataforma.py::test_the_write_guard_on_posix_paths
+pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Windows paths")
+
 from pathlib import Path
 
 from deck_studio.config import generic_config
