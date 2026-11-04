@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 
 from playwright.sync_api import expect
 
+from deck_studio.core import plataforma
 from tests.e2e.conftest import ROOT, SCENARIOS, built, go_slide, open_studio, run_studio, slide_and_step
 
 
@@ -119,13 +120,13 @@ def test_a_second_studio_on_the_same_data_dir_does_not_start_and_hands_over_the_
     second = subprocess.Popen(
         [sys.executable, "-m", "deck_studio", "--kit", str(studio.kit), "--port", "0", "--data", str(studio.data),
          "--fake-agent", str(SCENARIOS), "--no-open"],
-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8")
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", **plataforma.NEW_GROUP)
     try:
         out, err = second.communicate(timeout=20)
     except subprocess.TimeoutExpired:
         out, err = "", "it kept running"
     finally:
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(second.pid)], capture_output=True)
+        plataforma.kill_tree(second.pid)
         second.wait()
     assert "O Deck Studio já está aberto com esta pasta de dados" in err
     assert out.splitlines() == [f"DECK_STUDIO_URL={studio.url}"]

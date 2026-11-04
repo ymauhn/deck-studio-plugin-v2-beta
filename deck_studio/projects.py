@@ -13,7 +13,6 @@ import asyncio
 import collections
 import contextlib
 import json
-import msvcrt
 import os
 import re
 import shutil
@@ -27,6 +26,7 @@ import uuid
 from pathlib import Path, PureWindowsPath
 from urllib.parse import parse_qs, urlsplit
 
+from deck_studio.core import plataforma
 from deck_studio.server.api import ApiError
 from deck_studio.templates import fill_template
 
@@ -117,17 +117,27 @@ def save_registry(home, projects):
 @contextlib.contextmanager
 def registry_lock(home):
     """The studios of one home change the registry one at a time: a lock on home/projects.lock (the OS drops it if
-    its studio ends while holding it)."""
+    its studio ends while holding it). POSIX file locks do not exclude the threads of one process, so a thread lock
+    comes first."""
+    with _REGISTRY_THREADS, _registry_file_lock(home):
+        yield
+
+
+_REGISTRY_THREADS = threading.Lock()
+
+
+@contextlib.contextmanager
+def _registry_file_lock(home):
     file = Path(home) / "projects.lock"
     file.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(file, os.O_RDWR | os.O_CREAT | os.O_BINARY)
+    fd = os.open(file, os.O_RDWR | os.O_CREAT | plataforma.O_BINARY)
     try:
-        msvcrt.locking(fd, msvcrt.LK_LOCK, 1)  # waits up to 10 s
+        plataforma.lock_byte(fd, wait=True)  # Windows waits up to 10 s
         try:
             yield
         finally:
             os.lseek(fd, 0, os.SEEK_SET)
-            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+            plataforma.unlock_byte(fd)
     finally:
         os.close(fd)
 
@@ -178,7 +188,7 @@ def create_from_files(folder, name, slug, fmt, language, files, main):
 
 
 def stop_tree(pid):
-    subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True)
+    plataforma.kill_tree(pid)
 
 
 def running_url(data_dir, wait=0):
@@ -190,14 +200,14 @@ def running_url(data_dir, wait=0):
     end = time.monotonic() + wait
     while True:
         try:
-            fd = os.open(lock, os.O_RDONLY | os.O_BINARY)
+            fd = os.open(lock, os.O_RDONLY | plataforma.O_BINARY)
         except OSError:
             return None
         try:
             os.lseek(fd, 1 << 30, os.SEEK_SET)
-            os.read(fd, 1)
-            return None
-        except PermissionError:  # locked: it runs
+            if not plataforma.byte_locked(fd):
+                return None
+            # locked: it runs
             url = lock.read_text(encoding="utf-8")  # empty while it starts
             if url or time.monotonic() > end:
                 return url or None
@@ -213,7 +223,7 @@ def start(kit, data_dir, home, extra=(), timeout=60):
     argv = [sys.executable, "-m", "deck_studio", "--kit", str(kit), "--data", str(data_dir), "--home", str(home),
             "--port", "0", "--no-open", "--parent-pid", str(os.getpid()), *extra]
     proc = subprocess.Popen(argv, cwd=APP, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            creationflags=subprocess.CREATE_NO_WINDOW, env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                            creationflags=plataforma.NO_WINDOW, **plataforma.NEW_GROUP, env={**os.environ, "PYTHONIOENCODING": "utf-8"},
                             text=True, encoding="utf-8", errors="replace")
     found, done, tail = [], threading.Event(), collections.deque(maxlen=5)
 
@@ -274,7 +284,7 @@ async def extract(pdf, out, timeout=120):
     Returns info.json's object; an unreadable PDF is a 400 ApiError."""
     proc = await asyncio.create_subprocess_exec(
         sys.executable, "-m", "deck_studio.pdf_import", str(pdf), str(out), cwd=APP,
-        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=plataforma.NO_WINDOW)
     try:
         raw, _ = await asyncio.wait_for(proc.communicate(), timeout)
     except TimeoutError:

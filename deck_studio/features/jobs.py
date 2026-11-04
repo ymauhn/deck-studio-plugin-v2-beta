@@ -16,6 +16,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse
 
+from deck_studio.core import plataforma
 from deck_studio.server.api import ApiError, json_body
 
 CONFIRM = {"publish"}  # outward-facing: starts only with {"confirm": true}, which the UI sends after asking
@@ -42,13 +43,13 @@ async def run_lines(state, argv, on_line):
     """Run one command in the kit root, handing each output line to on_line; returns its exit code."""
     proc = await asyncio.create_subprocess_exec(
         shutil.which(argv[0]) or argv[0], *argv[1:], cwd=state.config["kitRoot"],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=plataforma.NO_WINDOW, **plataforma.NEW_GROUP)
     try:
         async for raw in proc.stdout:
             await on_line(raw.decode("utf-8", "replace").rstrip())
         return await proc.wait()
     except asyncio.CancelledError:  # the studio is closing: stop the command's whole process tree
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        plataforma.kill_tree(proc.pid)
         raise
 
 

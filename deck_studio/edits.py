@@ -3,6 +3,7 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from deck_studio.core import plataforma
 from deck_studio.server.api import ApiError
 
 
@@ -30,7 +31,8 @@ class EditService:
         if decision.behavior != "allow":
             reason = decision.reason if decision.behavior == "deny" else "A edição direta vale só na área liberada do deck."
             raise ApiError(403, "denied", reason)
-        path = Path(decision.paths[0])
+        # the guard compares Windows-style strings (core/write_guard.py): on POSIX its \tmp\kit is /tmp/kit
+        path = Path(decision.paths[0] if plataforma.WINDOWS else decision.paths[0].replace("\\", "/"))
         if not path.is_file():
             raise ApiError(404, "no-file", f"Arquivo não encontrado: {rel}")
         return path

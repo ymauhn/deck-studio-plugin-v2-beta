@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    # Windows and Linux (the colleagues' systems; no Mac, decision of 2026-11-04). Only the scripted agent runs here:
+    # the CI never calls the Claude API (tests/live skips without STUDIO_LIVE), and the tests that need the author's
+    # deck kit skip without it (tests/helpers/kit_copy.py).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: Chromium for Playwright
+        run: uv run playwright install --with-deps chromium
+      - name: Tests
+        run: uv run pytest -q -p no:cacheprovider tests/unit tests/e2e

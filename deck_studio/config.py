@@ -9,6 +9,8 @@ import sys
 import time
 from pathlib import Path
 
+from deck_studio.core import plataforma
+
 
 # the kit's deck/tools/export_pdf.py, run on the Portuguese deck: it is loaded as is and its SRC is replaced
 EXPORT_PT = ("import importlib.util as u; s = u.spec_from_file_location('export_pdf', 'deck/tools/export_pdf.py'); "
@@ -194,7 +196,7 @@ async def run_command(config, argv):
     try:
         proc = await asyncio.create_subprocess_exec(
             shutil.which(argv[0]) or argv[0], *argv[1:], cwd=config["kitRoot"],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=plataforma.NO_WINDOW)
         out, _ = await proc.communicate()
         code, output = proc.returncode, out.decode("utf-8", "replace")
     except OSError as e:

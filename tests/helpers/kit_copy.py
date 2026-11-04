@@ -15,6 +15,9 @@ SKIP = {Path("deck", p) for p in ("dist", "build/studio", "build/harness", "buil
 def make_kit_copy(src=None, extra=()):
     """Copy the kit parts the studio needs (plus `extra` kit-relative paths) into a new temp folder."""
     src = Path(src or os.environ.get("STUDIO_KIT") or REAL_KIT)
+    if not (src / "deck").is_dir():  # CI and colleagues' machines: the author's kit is not there
+        import pytest
+        pytest.skip(f"needs the deck kit (STUDIO_KIT, or {REAL_KIT})", allow_module_level=True)
     root = Path(tempfile.mkdtemp(prefix=PREFIX))
 
     def ignore(folder, names):
