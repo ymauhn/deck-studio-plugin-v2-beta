@@ -3,6 +3,7 @@ import fnmatch
 import ntpath
 import os
 import re
+import sys
 from dataclasses import dataclass, field
 
 from deck_studio.core.shell_policy import local_command
@@ -47,7 +48,9 @@ def _norm(base, p):
     device paths (//?/GLOBALROOT/..., //./pipe/...) stay absolute, hence outside every folder."""
     p = re.sub(r"^[\\/]{2}[?.][\\/](?=[a-z]:[\\/])", "", p, flags=re.I)
     p = re.sub(r"^[\\/]{2}[?.][\\/]UNC[\\/]", r"\\\\", p, flags=re.I)
-    return ntpath.normpath(ntpath.join(base, p))
+    p = ntpath.normpath(ntpath.join(base, p))
+    # a Windows short name (C:\\Users\\RUNNER~1) is the same folder as its long form, which the kit root has
+    return os.path.realpath(p) if sys.platform == "win32" and "~" in p else p
 
 
 def _bad():
@@ -96,7 +99,7 @@ class Guard:
 
     def _check(self, tool_name, tool_input, level):
         if tool_name in WRITE_TOOLS:
-            return self._write(self.write_path(tool_name, tool_input), level)
+            return self._write(self._write_target(tool_name, tool_input), level)
         if tool_name == "Read":
             return self._read(self._target(tool_input.get("file_path")))
         if tool_name in ("Grep", "Glob"):
@@ -120,10 +123,16 @@ class Guard:
             return Decision("allow", "Ferramenta do estúdio.")
         return Decision("ask", "Ferramenta desconhecida: precisa da sua aprovação.")
 
-    def write_path(self, tool_name, tool_input):
-        """The normalized file a write tool call targets; None for other tools or a missing path."""
+    def _write_target(self, tool_name, tool_input):
+        """The file a write tool call targets, normalized as the rules compare it; None for other tools or no path."""
         key = WRITE_TOOLS.get(tool_name)
         return self._target(tool_input.get(key)) if key and isinstance(tool_input, dict) else None
+
+    def write_path(self, tool_name, tool_input):
+        """The file a write tool call targets, as this system opens it; None for other tools or a missing path."""
+        target = self._write_target(tool_name, tool_input)
+        # the rules compare Windows-style strings; the path a caller opens is the system's own (\tmp\x is /tmp/x)
+        return target if target is None or sys.platform == "win32" else target.replace("\\", "/")
 
     def _target(self, p):
         return _norm(self.root, p) if isinstance(p, str) and p else None
