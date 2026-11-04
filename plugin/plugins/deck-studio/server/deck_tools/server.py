@@ -3,9 +3,11 @@ a folder made from the template (it has a studio.json); a tool works on `projeto
 else on the session's folder. The deck_studio package beside this one is a copy made by scripts/montar_plugin.py."""
 import asyncio
 import hashlib
+import json
 import os
 import shutil
 import sys
+import webbrowser
 from pathlib import Path
 
 from mcp.server.mcpserver import Image, MCPServer
@@ -17,6 +19,7 @@ from deck_studio.core import plataforma
 from deck_studio.features import beamer
 from deck_studio.render import Renderer
 from deck_studio.server.state import StudioState
+from deck_tools.editor import Editor
 
 QA = {"check": "qa/check_deck.py", "audit": "qa/audit_numbers.py", "shoot": "qa/shoot.py"}
 IMAGE_TYPES = {".png": ".png", ".jpg": ".jpg", ".jpeg": ".jpg", ".webp": ".webp", ".svg": ".svg"}
@@ -196,7 +199,6 @@ async def compile_beamer(path: str = "", projeto: str = "") -> str:
     """Compila o Beamer escrito à mão (padrão: beamer/apresentacao/apresentacao.tex). Devolve JSON {ok, pages, errors,
     boxes}: corrija os erros e os overfull boxes acima de 1 pt."""
     async def job():
-        import json
         st = state_of(projeto)
         result = await beamer.deck_for(st, path or None).full()
         return json.dumps(result, ensure_ascii=False)
@@ -256,6 +258,35 @@ async def verificar() -> str:
         found = shutil.which(tool)
         lines.append(f"{tool}: {found}" if found else f"{tool}: falta. {how}")
     return "\n".join(lines)
+
+
+_editor = Editor()
+
+
+@mcp.tool()
+async def abrir_editor(projeto: str = "") -> str:
+    """Abre o editor visual do projeto no navegador do autor: o deck com cada caixa clicável. O autor seleciona caixas,
+    escreve o que mudar e clica em "Enviar ao Claude"; depois leia com ler_selecao."""
+    async def job():
+        st = state_of(projeto)
+        build = await st.builder.build_studio()
+        if not build["ok"]:
+            return f"Erro: o build falhou:\n{build['error']}"
+        url = _editor.open(st.kit_root)
+        if not os.environ.get("DECK_NO_BROWSER"):
+            webbrowser.open(url)
+        return f"Editor aberto em {url} (só neste computador). Peça ao autor para selecionar e enviar."
+    return await guarded(job())
+
+
+@mcp.tool()
+async def ler_selecao() -> str:
+    """O que o autor mandou pelo editor visual: as caixas (loc = arquivo:linha:coluna da fonte, o texto, o slide e o
+    passo) e o pedido. Edite as fontes nesses locs, depois construir, screenshot_slide e check_slide."""
+    sel = _editor.read()
+    if not sel:
+        return "Nada foi enviado ainda: chame abrir_editor e peça ao autor para clicar nas caixas e enviar."
+    return json.dumps(sel, ensure_ascii=False, indent=1)
 
 
 def main():
