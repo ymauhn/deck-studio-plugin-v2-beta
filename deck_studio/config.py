@@ -51,7 +51,11 @@ def nexus_go_config(kit):
                      # Claude Code reads as instructions or settings (at every autonomy level; review of PR #3)
                      "deck/build.mjs", "deck/package.json", "deck/package-lock.json", "deck/tools/**", "tools/**",
                      "beamer/tools/**", "CLAUDE.md", "**/CLAUDE.md", "AGENTS.md", ".claude/settings.json",
-                     ".claude/settings.local.json"],
+                     ".claude/settings.local.json", "qa/*.py"],
+        # the deck's own commands, which the Autônomo level runs without asking (core/shell_policy.py); each one is
+        # protected above, so a script is never changed and run without the author
+        "localScripts": ["deck/build.mjs", "qa/run_all.py", "qa/audit_numbers.py", "qa/shoot.py",
+                         "qa/test_components.py", "qa/test_smoke.py", "deck/tools/export_pdf.py", "beamer/tools/build.py"],
         "askWriteDirs": [user_skills],
         "readDirs": [user_skills],
         # the Portuguese deck is a tree of its own, deck/src-pt (build.mjs --pt -> deck/dist/nexus-go-defesa-pt.html);
@@ -124,7 +128,9 @@ def generic_config(kit, fmt="html"):
         # the shell's scripts run in the studio deck, and the studio runs the build and the job tools; Claude Code
         # reads a CLAUDE.md, or a .claude folder below the project's own, in any folder it works in as instructions
         "askWrite": ["deck/src/*.js", "deck/src/*.mjs", "deck/src/*.cjs", "deck/src/shell.html", "deck/build.py",
-                     "deck/tools/**", "tools/**", "CLAUDE.md", "**/CLAUDE.md", "*/.claude/*"],
+                     "deck/tools/**", "tools/**", "CLAUDE.md", "**/CLAUDE.md", "*/.claude/*", "qa/*.py"],
+        "localScripts": ["deck/build.py", "deck/tools/export_pdf.py", "tools/overleaf_zip.py", "qa/check_deck.py",
+                         "qa/audit_numbers.py", "qa/shoot.py"],
         "askWriteDirs": [user_skills],
         "readDirs": [user_skills],
         # the chosen format's outputs (the other format's folder is the template, untouched): the HTML deck's PDF, or

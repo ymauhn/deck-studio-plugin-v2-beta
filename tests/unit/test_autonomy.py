@@ -42,18 +42,20 @@ def test_deck_still_asks_for_shell_web_and_reads_outside_the_kit():
     assert guard.check("Read", {"file_path": "C:\\Users\\Yeonatan\\notes.txt"}, "deck").behavior == "ask"
 
 
-def test_auto_runs_local_commands_reads_and_web_lookups_without_asking():
-    assert shell("npm run lint", "auto") == "allow"
+def test_auto_runs_the_decks_own_commands_and_reads_without_asking():
+    """The shell rule itself is in test_shell_policy.py; the web asks at every level (2026-11-04)."""
+    assert shell("node deck/build.mjs --pt", "auto") == "allow"
+    assert shell("python -I qa/run_all.py", "auto") == "allow"
     assert shell("Get-ChildItem deck/src/slides", "auto", "PowerShell") == "allow"
-    assert guard.check("WebSearch", {"query": "gene ontology"}, "auto").behavior == "allow"
     assert guard.check("Read", {"file_path": "C:\\Users\\Yeonatan\\notes.txt"}, "auto").behavior == "allow"
+    assert guard.check("WebSearch", {"query": "gene ontology"}, "auto").behavior == "ask"
 
 
-def test_auto_still_asks_for_external_actions_and_commands_that_reach_outside_the_kit():
+def test_auto_still_asks_for_external_actions_writes_and_unknown_commands():
     for command in ["powershell -File deck/tools/publish_netlify.ps1", "npx netlify deploy --prod", "git push",
                     "curl https://example.org", "Invoke-WebRequest https://x.org", "npm publish", "gh pr create",
-                    "ssh vps", "Remove-Item C:\\Users\\Yeonatan\\Documents\\x", "type ..\\secrets.txt",
-                    "cat ~/.ssh/id_ed25519", "echo x > $env:USERPROFILE\\x.txt", "copy a %APPDATA%\\b",
+                    "ssh vps", "Remove-Item C:\\Users\\Yeonatan\\Documents\\x", "npm run lint",
+                    "echo x > $env:USERPROFILE\\x.txt", "copy a %APPDATA%\\b",
                     "node -e \"require('fs').writeFileSync('deck/src/engine.js','')\"", "echo > deck/src/shell.html"]:
         assert shell(command, "auto") == "ask", command
     assert shell(f"type \"{KIT}\\deck\\src\\slides\\03-data.html\"", "auto") == "allow"

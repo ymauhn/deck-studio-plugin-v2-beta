@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "tool": "Edit", "input": { "file_path": "deck/src/slides/99-pedido.html",
+                                 "old_string": "Caixa a seguir", "new_string": "Caixa seguida" } },
+    { "wait": 2500 },
+    { "say": "Editei a caixa." }
+  ]
+}

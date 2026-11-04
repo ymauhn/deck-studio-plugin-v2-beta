@@ -112,7 +112,7 @@ def test_autonomo_runs_a_local_command_but_publishing_still_asks(studio, studio_
     page.reload()
     expect(switch(page).get_by_role("radio", name="Autônomo")).to_have_attribute("aria-checked", "true")
 
-    send(page, "#scenario:bash")
+    send(page, "#scenario:build-local")  # the deck's own build (core/shell_policy.py); "npm run lint" now asks
     expect(answers(page).last).to_have_text("Resultado: (simulado: o agente de teste não roda Bash)")
     expect(page.get_by_role("article", name="Aprovação: Bash")).to_have_count(0)
 

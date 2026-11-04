@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "tool": "Bash", "input": { "command": "node deck/build.mjs --pt 2>&1 | tail -2", "description": "Build the Portuguese deck" } },
+    { "say": "Resultado: {{result}}" }
+  ]
+}
