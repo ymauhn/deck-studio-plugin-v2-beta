@@ -224,11 +224,14 @@ async def screenshot_beamer_page(page: int, path: str = "", projeto: str = ""):
 
 
 @mcp.tool()
-async def exportar(projeto: str = "") -> str:
-    """Exporta o formato do projeto: o PDF do deck HTML (deck/dist/deck.pdf) ou o zip do Overleaf do Beamer."""
+async def exportar(formato: str = "", projeto: str = "") -> str:
+    """Exporta: formato "pdf", o PDF do deck HTML (deck/dist/deck.pdf); formato "overleaf", o zip do Beamer
+    (beamer/apresentacao) para subir no Overleaf, conferido compilando uma cópia sozinha. Sem formato, o do projeto."""
     async def job():
         st = state_of(projeto)
-        if st.config.get("format") == "beamer":  # the Overleaf zip, checked by compiling a copy alone
+        if formato not in ("", "pdf", "overleaf"):
+            raise Tool('formato é "pdf" ou "overleaf".')
+        if formato == "overleaf" or (not formato and st.config.get("format") == "beamer"):  # checked by a lone copy
             deck = beamer.deck_for(st, None)
             r = await deck.full()
             view = deck.current()
@@ -239,7 +242,10 @@ async def exportar(projeto: str = "") -> str:
             c = await asyncio.to_thread(overleaf.check, zip_path, deck.main.name)
             return (f"Zip do Overleaf: {zip_path} ({len(names)} arquivos). " +
                     ("Uma cópia compilou sozinha, sem nenhum [?]." if c["ok"] else f"A cópia sozinha falhou: {c}"))
-        name, commands = next(iter(st.config["jobs"].items()))
+        name = "export-pdf"
+        commands = st.config["jobs"].get(name)
+        if not commands:
+            raise Tool('Este projeto não tem o PDF do deck HTML: use formato "overleaf".')
         for argv in commands:
             code, out, _ = await run_command(st.config, argv)
             if code != 0:

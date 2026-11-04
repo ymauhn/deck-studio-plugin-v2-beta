@@ -6,6 +6,7 @@ import asyncio
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -114,6 +115,11 @@ async def main():
             await b.close()
         sel = json.loads(text(await s.call_tool("ler_selecao", {})))
         assert sel["pedido"] == "Encurte o título." and sel["itens"][0]["loc"].startswith("deck/src/slides/"), sel
+        assert "export-pdf pronto" in text(await s.call_tool("exportar", {"formato": "pdf"}))
+        assert (project / "deck/dist/deck.pdf").is_file()
+        if shutil.which("pdflatex"):  # the Overleaf zip compiles the Beamer deck: only with TeX (not on the CI runners)
+            ov = text(await s.call_tool("exportar", {"formato": "overleaf"}))
+            assert "Zip do Overleaf" in ov and "sem nenhum [?]" in ov, ov
         pub = text(await s.call_tool("publicar", {"site": "deck-teste"}))
         assert "deck-teste.netlify.app" in pub and deploys, pub
         assert (project / "deck/tools/netlify-site.json").is_file()
