@@ -24,7 +24,7 @@ Cada etapa é um ticket próprio, com branch e PR. As referências de código ab
 
 **O resto:**
 - **`__main__.py:14,50`:** `msvcrt` e `ctypes.WinDLL` saem do topo e passam para dentro de `if sys.platform == "win32"`. O `watch_parent` no POSIX é uma thread com `os.kill(pid, 0)` a cada segundo (`# ponytail:` 1 s de atraso).
-- **Pasta de dados:** `%LOCALAPPDATA%` no Windows e `${XDG_DATA_HOME:-~/.local/share}/deck-studio` no Linux (`__main__.py:30-42`). A pasta padrão dos projetos é `Path.home() / "Deck Studio"` (`features/projects.py:84`).
+- **Pasta de dados:** `%LOCALAPPDATA%` no Windows e `${XDG_DATA_HOME:-~/.local/share}/deck-studio` no Linux (`__main__.py:30-42`). A pasta padrão dos projetos já é `Path.home() / "Deck Studio"` (`features/projects.py:85`); só o exemplo de caminho no painel muda.
 - **TeX** (`beamer/engine.py:119,164,176`):
   - `-max-print-line=10000` só no MiKTeX, detectado por `pdflatex --version`;
   - no TeX Live, `max_print_line=10000` no `env`;
