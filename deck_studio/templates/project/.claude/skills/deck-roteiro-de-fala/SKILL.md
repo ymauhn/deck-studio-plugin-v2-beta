@@ -1,6 +1,6 @@
 ---
 name: deck-roteiro-de-fala
-description: Use ao escrever o roteiro.md, os cards de fala ou a narração de um deck do Deck Studio: um segmento por passo, orçamento de palavras, forma falada dos números e, se houver TTS, legendas e pronúncia.
+description: "Use ao escrever o roteiro.md, os cards de fala ou a narração de um deck do Deck Studio: um segmento por passo, orçamento de palavras, forma falada dos números e, se houver TTS, legendas e pronúncia."
 ---
 
 # Roteiro de fala e narração

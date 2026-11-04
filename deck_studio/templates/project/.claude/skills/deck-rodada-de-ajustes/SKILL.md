@@ -1,6 +1,6 @@
 ---
 name: deck-rodada-de-ajustes
-description: Use quando o autor ou o orientador manda correções num deck do Deck Studio (lista, comentário ou captura de tela): como interpretar, propagar a todos os slides, registrar e relatar.
+description: "Use quando o autor ou o orientador manda correções num deck do Deck Studio (lista, comentário ou captura de tela): como interpretar, propagar a todos os slides, registrar e relatar."
 ---
 
 # Rodada de ajustes do autor

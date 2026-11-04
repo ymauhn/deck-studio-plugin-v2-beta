@@ -1,6 +1,6 @@
 ---
 name: deck-leituras-de-resultado
-description: Use ao montar ou revisar slides de resultado (tabela, gráfico, frase de leitura) num deck do Deck Studio: marcação do melhor valor, forma do gráfico e leitura presa à métrica.
+description: "Use ao montar ou revisar slides de resultado (tabela, gráfico, frase de leitura) num deck do Deck Studio: marcação do melhor valor, forma do gráfico e leitura presa à métrica."
 ---
 
 # Slides de resultado: tabela, gráfico e leitura
