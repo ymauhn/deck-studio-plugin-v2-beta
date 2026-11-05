@@ -439,7 +439,12 @@ def push(content, meta):
     if not loop:
         return False
     note = JSONRPCNotification(jsonrpc="2.0", method="notifications/claude/channel", params={"content": content, "meta": meta})
-    asyncio.run_coroutine_threadsafe(write.send(SessionMessage(note)), loop).result(5)
+    sent = asyncio.run_coroutine_threadsafe(write.send(SessionMessage(note)), loop)
+    try:
+        sent.result(5)
+    except BaseException:
+        sent.cancel()
+        raise
     return True
 
 
