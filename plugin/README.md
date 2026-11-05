@@ -62,6 +62,8 @@ Abra uma sessão nova e rode `/deck-studio:verificar`. Ela diz o que falta nesta
   ```
 
   - **Como funciona:** o painel usa os [canais](https://code.claude.com/docs/en/channels) do Claude Code, o caminho oficial para uma mensagem de fora entrar numa sessão aberta. Os canais estão em prévia de pesquisa. Enquanto o plugin não está na lista aprovada pela Anthropic, o Claude Code só carrega o canal com esse flag, e mostra um aviso na abertura: escolha "I am using this for local development".
+  - **O que o flag faz:** ele só libera o canal deste plugin, o que o nome depois do flag indica, pulando a lista de canais aprovados. Ele não desliga permissões nem outras proteções do Claude Code, e o aviso aparece toda vez que você abre a sessão assim.
+  - **Próximo passo:** pedir a listagem do plugin no marketplace oficial da Anthropic. Com o plugin listado, bastará `claude --channels plugin:deck-studio@...`, sem o flag.
   - **Quem roda é o seu Claude Code**, com a sua conta. O plugin não tem login, não guarda token e não chama a API: o painel só fala com o servidor do plugin no seu computador (127.0.0.1, com uma chave na URL), e o servidor só passa a mensagem para a sua sessão.
   - **Em plano Team ou Enterprise**, o administrador precisa ligar os canais (`channelsEnabled`).
   - **Sem o flag**, o editor funciona como antes: envie pelo painel e diga no Claude Code "aplique a seleção do editor". O painel lembra disso quando a resposta não chega.
