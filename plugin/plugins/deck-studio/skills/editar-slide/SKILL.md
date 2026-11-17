@@ -1,6 +1,6 @@
 ---
 name: editar-slide
-description: "Aplica no deck o que o autor selecionou e pediu pelo editor visual do Deck Studio (caixas clicadas e um pedido). Use quando o autor disser para aplicar a seleção do editor, ou pedir para abrir o editor."
+description: "Abre o studio simples (o editor visual do Deck Studio, sem chat na página) e aplica no deck o que o autor selecionou e pediu nele (caixas clicadas e um pedido). Use quando o autor pedir para abrir o editor ou o studio simples, ou para aplicar a seleção do editor. Para o app completo, com chat, use deck-studio:instalar-studio."
 ---
 
 # Editar pelo editor visual
